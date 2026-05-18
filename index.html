@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>倒数计时器 · 带历史记录</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <header class="page-header">
+      <p class="eyebrow">专注与备忘</p>
+      <h1>倒数计时器</h1>
+      <p class="subtitle">设置标题与分钟数，开始后可暂停、重置；结束或关闭本次计时会记入历史。</p>
+    </header>
+
+    <div class="card">
+      <div class="field">
+        <label for="titleInput">计时标题（可选）</label>
+        <input type="text" id="titleInput" placeholder="例如：专注工作 / 煮面 5 分钟" maxlength="80" />
+      </div>
+
+      <div class="row">
+        <div class="field" style="margin-bottom:0; flex:1;">
+          <label for="minutesInput">倒计时时长（分钟）</label>
+          <input type="number" id="minutesInput" min="1" max="999" value="5" step="1" />
+        </div>
+      </div>
+
+      <div class="display">
+        <div id="timeDisplay" class="time idle">00:00</div>
+        <div id="stateBadge" class="badge badge--idle">状态：待命</div>
+      </div>
+
+      <div class="btns">
+        <button type="button" class="btn-primary" id="btnStart">开始</button>
+        <button type="button" class="btn-secondary" id="btnPause" disabled>暂停</button>
+        <button type="button" class="btn-secondary" id="btnResume" disabled>继续</button>
+        <button type="button" class="btn-danger" id="btnReset">重置</button>
+      </div>
+
+      <div class="btns btns--full" style="margin-top:var(--space-3);">
+        <button type="button" class="btn-secondary btn-wide" id="btnCloseSession" disabled>关闭本次计时并记录</button>
+      </div>
+
+      <div class="status-line" id="statusLine">
+        <strong>操作反馈：</strong><span id="statusText">请设置分钟数后点击「开始」。</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="section-title">
+        <span>历史记录（最近 50 条）</span>
+        <button type="button" class="btn-ghost" id="btnClearHistory">清空历史</button>
+      </p>
+      <div class="history" id="historyList"></div>
+    </div>
+  </div>
+</body>
+</html>
