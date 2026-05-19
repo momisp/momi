@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>游戏活动时间轴</title>
+<style>
+:root{--bg:#0b1020;--card:#141a2f;--bd:#29324a;--m:#aab4d6;--t:#f4f7ff;--a:#6aa6ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.55}
+header{padding:26px clamp(14px,3.8vw,40px) 16px;border-bottom:1px solid var(--bd);background:radial-gradient(980px 360px at 12% -20%,rgba(106,166,255,.15),transparent 60%)}
+h1{margin:0 0 8px;font-size:clamp(22px,3.6vw,30px)}
+p.lead{margin:0;color:var(--m);max-width:74ch;font-size:14px}
+main{padding:18px clamp(14px,3.8vw,40px) 48px;max-width:1060px;margin:0 auto}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+.panel h2{margin:0 0 12px;font-size:17px}
+.row{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center}
+.chk{display:inline-flex;gap:8px;padding:6px 10px;border:1px solid var(--bd);border-radius:999px;cursor:pointer}
+.chk input{accent-color:var(--a)}
+.btn{background:#1c2540;border:1px solid var(--bd);color:var(--t);padding:8px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.secondary{font-weight:600}
+.btn:hover{border-color:#6aa6ff91}
+.field{width:100%;background:#0f1528;border:1px solid var(--bd);border-radius:10px;color:var(--t);padding:8px 10px}
+#status{margin-top:12px;padding:10px 12px;border:1px dashed var(--bd);border-radius:10px;color:var(--m);font-size:14px}
+#status[data-k=ok]{border-color:#278f47;color:#dae7ff}
+#status[data-k=warn]{border-color:#d4992b}
+#status[data-k=err]{border-color:#ff6b6b}
+#status b{color:var(--t)}
+.small{font-size:12px;color:var(--m)}
+.days{margin-top:10px}
+.day{margin:16px 0 8px;font-weight:800;font-size:14px;color:var(--m)}
+ul.events{list-style:none;margin:0;padding:0}
+.card{border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#101833}
+.badge{display:flex;gap:10px;align-items:center;color:var(--m);font-size:12px;margin-bottom:8px}
+.dot{width:8px;height:8px;border-radius:999px;background:var(--a)}
+.card h3{margin:0 0 8px;font-size:15px;line-height:1.35}
+.meta{font-size:13px;color:var(--m)}
+a.go{display:inline-block;margin-top:10px;color:var(--a)}
+.empty{padding:20px;border:1px dashed var(--bd);border-radius:12px;text-align:center;color:var(--m)}
+details summary{cursor:pointer;color:var(--m)}
+textarea.field{min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>游戏活动时间轴</h1>
+  <p class="lead">覆盖：绝区零 / 原神 / 崩坏3 / 崩坏：星穹铁道 / 明日方舟。自动抓取官方公告 JSON，按关键字筛出偏「活动期」的条目，并用本地缓存做每天首次静默更新（受浏览器跨域限制，必要时勾选代理）。</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>控制台</h2>
+    <div class="row">
+      <button class="btn" id="btnRun" type="button">立即抓取并写入缓存</button>
+      <button class="btn secondary" id="btnClr" type="button">清空缓存</button>
+      <label class="chk"><input id="autoDay" type="checkbox" checked />北京时间每日首次打开自动静默抓取</label>
+      <label class="chk"><input id="useProxy" type="checkbox" />跨域失败时用公共代理（api.allorigins.win）</label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <span class="small">展示游戏：</span>
+      <label class="chk"><input class="g" type="checkbox" value="zzz" checked />绝区零</label>
+      <label class="chk"><input class="g" type="checkbox" value="ys" checked />原神</label>
+      <label class="chk"><input class="g" type="checkbox" value="bh3" checked />崩坏3</label>
+      <label class="chk"><input class="g" type="checkbox" value="sr" checked />崩铁</label>
+      <label class="chk"><input class="g" type="checkbox" value="ak" checked />明日方舟</label>
+    </div>
+    <div style="margin-top:10px">
+      <div class="small" style="margin-bottom:6px;color:var(--t)">活动相关标题关键字（正则，子串匹配）</div>
+      <input class="field" id="pat" spellcheck="false" autocomplete="off" />
+    </div>
+    <div id="status">状态：<b>就绪</b>，点「立即抓取」开始。</div>
+    <div class="small" style="margin-top:8px">说明：调整关键字会即时重绘已缓存数据，不必重新联网。</div>
+  </section>
+
+  <section class="panel">
+    <h2 id="hdr">活动时间轴（按日期）</h2>
+    <div class="days" id="root"></div>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary><b style="color:var(--t)">高级：数据源 JSON（localStorage 覆盖项）</b></summary>
+      <p class="small" style="margin-top:8px">仅保存 <code>regexDefault</code> / <code>proxyPrefix</code> / <code>games</code> 三项；保存后刷新默认正则与抓取地址。</p>
+      <textarea class="field" id="cfg"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn secondary" id="cfgDef" type="button">恢复默认</button>
+        <button class="btn" id="cfgOk" type="button">保存</button>
+      </div>
+    </details>
+  </section>
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  var LS = { raw:"gtl_raw_v1", last:"gtl_last_v1", day:"gtl_day_v1", auto:"gtl_auto_v1", cfg:"gtl_cfg_v1" };
+
+  var BASE = {
+    regexDefault: "活动|寻访|限定|限时|双倍|招募|开放|期|UP|祈愿|跃迁|防断|预约|闪断|维护",
+    proxyPrefix: "https://api.allorigins.win/raw?url=",
+    games: [
+      {k:"zzz",n:"绝区零",feeds:[
+        {t:"mh",u:"https://content-static.hoyoverse.com/content/napCn/getContentList?pageSize=40&pageNum=1&channelId=47"},
+        {t:"mh",u:"https://content-static.mihoyo.com/content/napCn/getContentList?pageSize=40&pageNum=1&channelId=47"}
+      ]},
+      {k:"ys",n:"原神",feeds:[
+        {t:"mh",u:"https://content-static.hoyoverse.com/content/ysCn/getContentList?pageSize=40&pageNum=1&channelId=12"},
+        {t:"mh",u:"https://content-static.mihoyo.com/content/ysCn/getContentList?pageSize=40&pageNum=1&channelId=12"}
+      ]},
+      {k:"bh3",n:"崩坏3",feeds:[
+        {t:"mh",u:"https://content-static.hoyoverse.com/content/bh3Cn/getContentList?pageSize=40&pageNum=1&channelId=12"},
+        {t:"mh",u:"https://content-static.mihoyo.com/content/bh3Cn/getContentList?pageSize=40&pageNum=1&channelId=12"}
+      ]},
+      {k:"sr",n:"崩坏：星穹铁道",feeds:[
+        {t:"mh",u:"https://content-static.hoyoverse.com/content/hkrpgCn/getContentList?pageSize=40&pageNum=1&channelId=12"},
+        {t:"mh",u:"https://content-static.mihoyo.com/content/hkrpgCn/getContentList?pageSize=40&pageNum=1&channelId=12"}
+      ]},
+      {k:"ak",n:"明日方舟",feeds:[
+        {t:"ak",u:"https://ak-fs.hypergryph.com/announce/Android/announcement.meta.json"},
+        {t:"ak",u:"https://ak-fs.hypergryph.com/announce/IOS/announcement.meta.json"}
+      ]}
+    ]
+  };
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;"); }
+
+  function cfgActive(){
+    var o={};
+    try{ o=JSON.parse(localStorage.getItem(LS.cfg)||"{}"); }catch(e){ o={}; }
+    var c=JSON.parse(JSON.stringify(BASE));
+    if(o.regexDefault) c.regexDefault=String(o.regexDefault);
+    if(o.proxyPrefix) c.proxyPrefix=String(o.proxyPrefix);
+    if(Array.isArray(o.games)&&o.games.length) c.games=o.games;
+    return c;
+  }
+
+  function cfgText(){ var c=cfgActive(); return JSON.stringify({regexDefault:c.regexDefault,proxyPrefix:c.proxyPrefix,games:c.games},null,2); }
+
+  function fmtCn(d){
+    return new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Shanghai",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false})
+      .format(d).replace(",","");
+  }
+  function dayCN(){ return fmtCn(new Date()).slice(0,10); }
+
+  function parseMs(v){
+    if(v==null||v==="") return null;
+    if(typeof v==="number"){ var n=v; if(Math.abs(n)<1e11) n*=1000; return isFinite(n)?n:null; }
+    var d=new Date(String(v));
+    if(isFinite(d.valueOf())) return d.valueOf();
+    var m=String(v).trim().replace("T"," ").match(/^(\d{4})-(\d{2})-(\d{2})(?:[ ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if(!m) return null;
+    var y=+m[1],mo=+m[2],da=+m[3],hh=m[4]?+m[4]:0,mi=m[5]?+m[5]:0,ss=m[6]?+m[6]:0;
+    return Date.UTC(y,mo-1,da,hh-8,mi,ss);
+  }
+
+  function mapMh(j, k, name){
+    var list=(j&&j.data&&j.data.list)||[];
+    var out=[], i, row, ttl, t, u, jmp;
+    for(i=0;i<list.length;i++){
+      row=list[i]||{};
+      ttl=String(row.title||row.subtitle||"").trim();
+      if(!ttl) continue;
+      t=parseMs(row.publish_time||row.display_time||row.time||row.start_time||row.startTime||row.created_at);
+      u="";
+      jmp=row.jump_url||row.jumpUrl||row.url;
+      if(/^https?:/i.test(String(jmp))) u=String(jmp);
+      out.push({k:k,n:name,ttl:ttl,t:t,u:u,id:k+"|"+ttl});
+    }
+    return out;
+  }
+
+  function stripHtml(s){ return String(s||"").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim(); }
+
+  function mapAk(j, k, name){
+    var list=[];
+    if(Array.isArray(j&&j.announceList)) list=j.announceList;
+    else if(j&&j.data&&Array.isArray(j.data.announceList)) list=j.data.announceList;
+    var out=[], i, row, ttl, uid, t, u;
+    for(i=0;i<list.length;i++){
+      row=list[i]||{};
+      ttl=String(row.title||"").trim();
+      if(!ttl) ttl=stripHtml(row.bodyHtml||row.content||"").slice(0,80);
+      if(!ttl) ttl=stripHtml(JSON.stringify(row)).slice(0,60);
+      uid=String(row.unique_id||row.uniqueId||row.announce_id||row.id||"");
+      t=parseMs(row.updatedAt||row.publishTime||row.time||row.startTime||(row.times&&row.times.start));
+      u=uid?("https://ak.hypergryph.com/news/"+encodeURIComponent(uid)):"https://ak.hypergryph.com/news/";
+      out.push({k:k,n:name,ttl:ttl,t:t,u:u,id:k+"|"+uid+"|"+ttl});
+    }
+    return out;
+  }
+
+  function uniqMerge(dst, add){
+    var seen={}, out=dst.slice(), i, x, id;
+    for(i=0;i<out.length;i++){ id=out[i].id; seen[id]=1; }
+    for(i=0;i<add.length;i++){
+      x=add[i]; id=x.id; if(seen[id]) continue; seen[id]=1; out.push(x);
+    }
+    return out;
+  }
+
+  function fetchJson(url, proxy, cfg){
+    var u=url;
+    if(proxy) u=(cfg.proxyPrefix||BASE.proxyPrefix)+encodeURIComponent(url);
+    return fetch(u,{credentials:"omit",cache:"no-store"}).then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.text();
+    }).then(function(t){
+      try{ return JSON.parse(t); }catch(e){ throw new Error("JSON 解析失败"); }
+    });
+  }
+
+  function crawl(cfg, proxy, step, done){
+    var acc=[];
+    var gi=0;
+
+    function nextGame(){
+      if(gi>=cfg.games.length){
+        acc.sort(function(a,b){ return (b.t||0)-(a.t||0); });
+        return done(null, acc);
+      }
+      var g=cfg.games[gi++];
+      var feeds=g.feeds||[];
+      var fi=0;
+
+      function nextFeed(){
+        if(fi>=feeds.length) return nextGame();
+        var f=feeds[fi++];
+        step((g.n||g.k)+" · 源 "+fi+"/"+feeds.length);
+        fetchJson(f.u, proxy, cfg).then(function(payload){
+          var chunk=[];
+          if(f.t==="mh") chunk=mapMh(payload, g.k, g.n);
+          if(f.t==="ak") chunk=mapAk(payload, g.k, g.n);
+          acc=uniqMerge(acc, chunk);
+          nextFeed();
+        }).catch(function(){ nextFeed(); });
+      }
+      nextFeed();
+    }
+    nextGame();
+  }
+
+  function loadRaw(){
+    try{ return JSON.parse(localStorage.getItem(LS.raw)||"[]"); }catch(e){ return []; }
+  }
+
+  function saveRaw(rows){ localStorage.setItem(LS.raw, JSON.stringify(rows)); localStorage.setItem(LS.last, new Date().toISOString()); }
+
+  function makeRx(pat, def){
+    pat=String(pat||"").trim();
+    if(!pat) pat=def;
+    try{ if(!pat) pat="."; return new RegExp(pat,"i"); }catch(e){ return /\u6d3b\u52a8|\u9650\u5b9a/; }
+  }
+
+  function filterRows(pat, cfg, rows){ var rx=makeRx(pat,cfg.regexDefault); return rows.filter(function(r){ return rx.test(r.ttl||""); }); }
+
+  function render(rows){
+    var host=$("root"); host.innerHTML="";
+    var allow={};
+    Array.prototype.forEach.call(document.querySelectorAll(".g"),function(ch){ allow[ch.value]=ch.checked; });
+    rows=rows.filter(function(r){ return allow[r.k]; });
+    rows.sort(function(a,b){ return (b.t||0)-(a.t||0); });
+    if(!rows.length){
+      host.innerHTML="<div class=empty><b style=color:var(--t)>暂时没有可展示条目</b><div class=small style=margin-top:8px>尝试抓取或在上面放宽正则</div></div>";
+      return;
+    }
+    var buckets={}, i, r, key, ks, dk;
+    for(i=0;i<rows.length;i++){
+      r=rows[i];
+      key=r.t&&isFinite(r.t)? fmtCn(new Date(r.t)).slice(0,10) : "unknown";
+      buckets[key]=buckets[key]||[]; buckets[key].push(r);
+    }
+    ks=Object.keys(buckets).sort().reverse();
+    for(i=0;i<ks.length;i++){
+      dk=ks[i];
+      var h=document.createElement("div");
+      h.className="day";
+      h.textContent= dk==="unknown" ? "时间未解析条目" : (dk + "（北京时间日期）");
+      host.appendChild(h);
+      var ul=document.createElement("ul");
+      ul.className="events";
+      buckets[dk].sort(function(a,b){ return (b.t||0)-(a.t||0); }).forEach(function(ev){
+        var li=document.createElement("li");
+        var dv=document.createElement("div");
+        dv.className="card";
+        dv.innerHTML="<div class=badge><span class=dot></span><span>"+esc(ev.n)+"</span></div>"
+          + "<h3>"+esc(ev.ttl)+"</h3>"
+          + "<div class=meta style=margin-top:6px>展示时间：<b style=color:"+((ev.t?"#eaf0ff":"#cbd6ff"))+">"+
+            esc(ev.t?fmtCn(new Date(ev.t)):"公告未附带可解析时间")+"</b></div>";
+        if(ev.u){ var a=document.createElement("a"); a.href=ev.u; a.target="_blank"; a.rel="noopener noreferrer"; a.className="go"; a.textContent="原文链接"; dv.appendChild(a); }
+        li.appendChild(dv); ul.appendChild(li);
+      });
+      host.appendChild(ul);
+    }
+  }
+
+  function stat(k, html){ $("status").dataset.k=k||""; $("status").innerHTML=html||""; }
+
+  function repaint(){
+    var cfg=cfgActive(); render(filterRows($("pat").value, cfg, loadRaw()));
+    $("hdr").textContent="活动时间轴（按日期）";
+    var last=localStorage.getItem(LS.last);
+    if(last){
+      try{ $("hdr").textContent+=" · 最近缓存 "+esc(fmtCn(new Date(last))); }catch(_e){}
+    }
+  }
+
+  function stashAuto(){ localStorage.setItem(LS.auto, $("autoDay").checked?"1":"0"); }
+  function readAuto(){ try{ return (localStorage.getItem(LS.auto)||"1")==="1"; }catch(_e){ return true; } }
+
+  function maybeSilent(cfg){ if(!$("autoDay").checked || !readAuto()) return; var dn=dayCN(); if(localStorage.getItem(LS.day)===dn) return; silentFetch(cfg,true); }
+
+  function silentFetch(cfg, first){
+    stat("", "状态：<b>静默抓取进行中</b>...");
+    crawl(cfg, !!$("useProxy").checked, function(){}, function(err, rows){
+      if(err){
+        stat("warn","状态：<b>静默未完成</b>（网络 / 跨域）。可勾选代理后手动抓取。");
+        return;
+      }
+
+      rows=rows||[];
+      saveRaw(rows);
+
+      if(rows.length===0){
+        repaint();
+        localStorage.removeItem(LS.day);
+        stat("warn","状态：<b>静默抓取结果为空</b>（可能是跨域 / 数据源变更）；可勾选代理后重试。");
+        return;
+      }
+
+      localStorage.setItem(LS.day, dayCN());
+      repaint();
+      stat("ok","状态：<b>静默完成</b>，缓存条目 <b>"+rows.length+"</b>。");
+    });
+  }
+
+  $("btnRun").onclick=function(){ stashAuto(); var cfg=cfgActive(); crawl(cfg, !!$("useProxy").checked, function(s){ stat("","状态：<b>抓取中</b>："+esc(String(s))); }, function(err, rows){
+      if(err){ stat("err","状态：<b>抓取失败：</b>"+esc(String(err&&err.message||err))); return; }
+      saveRaw(rows||[]); repaint();
+      stat("ok","状态：<b>抓取完成</b>，缓存 <b>"+(rows||[]).length+"</b>，现在：<b>"+esc(fmtCn(new Date()))+"</b>。"); });
+  };
+
+  $("btnClr").onclick=function(){ localStorage.removeItem(LS.raw); localStorage.removeItem(LS.last); localStorage.removeItem(LS.day); repaint(); stat("ok","状态：<b>缓存已清空</b>"); };
+
+  $("autoDay").onchange=function(){ $("autoDay").checked?localStorage.setItem(LS.auto,"1"):localStorage.setItem(LS.auto,"0"); };
+
+  $("useProxy").onchange=function(){};
+
+  Array.prototype.forEach.call(document.querySelectorAll(".g"),function(ch){ ch.onchange=function(){ repaint(); }; });
+
+  var to;
+  $("pat").addEventListener("input",function(){ clearTimeout(to); to=setTimeout(repaint, 180); });
+
+  $("cfgOk").onclick=function(){ try{ saveCfgOverlay($("cfg").value); $("pat").value=cfgActive().regexDefault; repaint(); stat("ok","状态：<b>配置已持久化（localStorage）</b>"); }catch(e){ stat("err","状态：<b>JSON 有误</b>："+esc(String(e))); } };
+
+  $("cfgDef").onclick=function(){ localStorage.removeItem(LS.cfg); $("cfg").value=cfgText(); $("pat").value=cfgActive().regexDefault; repaint(); stat("ok","状态：<b>配置已复位</b>"); };
+
+  function saveCfgOverlay(raw){
+    var o=JSON.parse(raw);
+    var p={}; if(o.regexDefault!=null) p.regexDefault=o.regexDefault; if(o.proxyPrefix!=null) p.proxyPrefix=o.proxyPrefix; if(Array.isArray(o.games)) p.games=o.games;
+    localStorage.setItem(LS.cfg, JSON.stringify(p));
+  }
+
+  (function boot(){
+    $("autoDay").checked=readAuto();
+    var cfg=cfgActive();
+    $("pat").value=cfg.regexDefault;
+    $("cfg").value=cfgText();
+    repaint();
+    maybeSilent(cfg);
+  })();
+})();
+</script>
+</body>
+</html>
