@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>游戏活动时间轴</title>
+<style>
+:root {
+  --bg: #0f1419;
+  --card: #1a2332;
+  --border: #2d3a4d;
+  --text: #e8eef7;
+  --muted: #8b9cb3;
+  --accent: #5b9bd5;
+  --line: #3d5066;
+  --ok: #4caf50;
+  --warn: #ff9800;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(160deg, #0f1419 0%, #1a2838 100%);
+  color: var(--text);
+  padding: 1.25rem;
+  line-height: 1.5;
+}
+.wrap { max-width: 900px; margin: 0 auto; }
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem 0;
+  letter-spacing: 0.02em;
+}
+.sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1rem;
+}
+.row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+label.chk {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  user-select: none;
+}
+label.chk input { accent-color: var(--accent); }
+.btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.status {
+  font-size: 0.88rem;
+  color: var(--muted);
+  min-height: 1.4em;
+  margin-top: 0.6rem;
+}
+.status strong { color: var(--text); }
+.status .ok { color: var(--ok); }
+.status .warn { color: var(--warn); }
+.timeline {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 0.45rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--line);
+  border-radius: 1px;
+}
+.day-group { margin-bottom: 1.35rem; }
+.day-title {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+.day-title::before {
+  content: "";
+  position: absolute;
+  left: -1.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+.card {
+  background: #151d2a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 0.95rem;
+  margin-bottom: 0.6rem;
+  border-left: 3px solid var(--tag, var(--accent));
+}
+.card h3 {
+  margin: 0 0 0.35rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.card .meta {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+.card .desc {
+  font-size: 0.88rem;
+  color: #c5d0e0;
+  word-break: break-word;
+}
+.tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(91, 155, 213, 0.2);
+  color: #a8d4ff;
+  margin-right: 0.35rem;
+}
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 2rem 1rem;
+  font-size: 0.95rem;
+}
+.note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.75rem;
+  line-height: 1.45;
+}
+a { color: var(--accent); }
+footer.note { margin-top: 1rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>游戏活动时间轴</h1>
+  <p class="sub">每日自动同步公开资讯（RSS）：从多源聚合后按标题关键词归入绝区零、原神、崩坏3、崩坏：星穹铁道、明日方舟。首次打开与之后每 24 小时自动拉取；亦可随时手动同步。</p>
+
+  <div class="panel">
+    <div class="row">
+      <span style="font-size:0.9rem;color:var(--muted);">显示游戏：</span>
+      <label class="chk"><input type="checkbox" class="game-filter" data-game="绝区零" checked> 绝区零</label>
+      <label class="chk"><input type="checkbox" class="game-filter" data-game="原神" checked> 原神</label>
+      <label class="chk"><input type="checkbox" class="game-filter" data-game="崩坏3" checked> 崩坏3</label>
+      <label class="chk"><input type="checkbox" class="game-filter" data-game="崩坏：星穹铁道" checked> 崩坏：星穹铁道</label>
+      <label class="chk"><input type="checkbox" class="game-filter" data-game="明日方舟" checked> 明日方舟</label>
+    </div>
+    <div class="row" style="margin-top:0.85rem;">
+      <button type="button" class="btn" id="btn-sync">立即同步</button>
+      <span style="font-size:0.88rem;color:var(--muted);">上次成功同步：<span id="last-sync">尚未同步</span></span>
+    </div>
+    <div class="status" id="status-line">等待操作：可点击「立即同步」或等待自动同步。</div>
+  </div>
+
+  <div class="panel" id="timeline-panel">
+    <div id="timeline-root"><div class="empty">加载中…</div></div>
+  </div>
+
+  <p class="note">
+    说明：本页通过第三方 RSS 聚合接口读取公开资讯。若网络或服务不可用，将显示本地备份条目。链接均为官方或资讯站公开页面，请以游戏内公告为准。
+  </p>
+</div>
+
+<script>
+(function () {
+  var RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
+  var STORAGE_LAST = "gameTimelineLastSync";
+  var STORAGE_CACHE = "gameTimelineItemCache";
+
+  var RSS_FEEDS = [
+    "https://www.pcgamer.com/rss/",
+    "https://kotaku.com/rss",
+    "https://www.gamespot.com/feeds/mashup/"
+  ];
+
+  var FALLBACK = [
+    { game: "原神", title: "【演示】原神 — 版本活动请以游戏内公告为准", date: new Date(), link: "https://genshin.hoyoverse.com/", desc: "本地演示条目：网络不可用时显示。点击「立即同步」重试拉取资讯。" },
+    { game: "崩坏：星穹铁道", title: "【演示】崩坏：星穹铁道 — 列车智库更新", date: new Date(Date.now() - 86400000), link: "https://hsr.hoyoverse.com/", desc: "本地演示条目。" },
+    { game: "绝区零", title: "【演示】绝区零 — 调频与活动时段", date: new Date(Date.now() - 172800000), link: "https://zzz.hoyoverse.com/", desc: "本地演示条目。" },
+    { game: "崩坏3", title: "【演示】崩坏3 — 作战档案与开放世界", date: new Date(Date.now() - 3600000), link: "https://bh3.hoyoverse.com/", desc: "本地演示条目。" },
+    { game: "明日方舟", title: "【演示】明日方舟 — 活动关卡开放中", date: new Date(Date.now() - 7200000), link: "https://ak.hypergryph.com/", desc: "本地演示条目。" }
+  ];
+
+  var gameColors = {
+    "绝区零": "#ff9966",
+    "原神": "#6fa8dc",
+    "崩坏3": "#ff79b0",
+    "崩坏：星穹铁道": "#c58af9",
+    "明日方舟": "#f5c542"
+  };
+
+  var items = [];
+  var btn = document.getElementById("btn-sync");
+  var statusLine = document.getElementById("status-line");
+  var lastSyncEl = document.getElementById("last-sync");
+  var root = document.getElementById("timeline-root");
+
+  function fmtDate(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+
+  function fmtTime(d) {
+    return d.toLocaleString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function setStatus(html) {
+    statusLine.innerHTML = html;
+  }
+
+  function getFilters() {
+    var set = {};
+    document.querySelectorAll(".game-filter:checked").forEach(function (el) {
+      set[el.getAttribute("data-game")] = true;
+    });
+    return set;
+  }
+
+  function groupByDay(list) {
+    var map = {};
+    list.forEach(function (it) {
+      var key = fmtDate(it.date);
+      if (!map[key]) map[key] = [];
+      map[key].push(it);
+    });
+    var keys = Object.keys(map).sort(function (a, b) { return b.localeCompare(a); });
+    return keys.map(function (k) { return { day: k, items: map[k] }; });
+  }
+
+  function render() {
+    var filter = getFilters();
+    var filtered = items.filter(function (it) { return filter[it.game]; });
+    filtered.sort(function (a, b) { return b.date - a.date; });
+    var groups = groupByDay(filtered);
+
+    if (!groups.length) {
+      root.innerHTML = "<div class=\"empty\">当前筛选下没有条目，请勾选上方游戏或先点击「立即同步」。</div>";
+      return;
+    }
+
+    var html = "";
+    groups.forEach(function (g) {
+      html += "<div class=\"day-group\"><div class=\"day-title\">" + g.day + "</div>";
+      g.items.forEach(function (it) {
+        var col = gameColors[it.game] || "#5b9bd5";
+        var safeTitle = escapeHtml(it.title);
+        var safeDesc = escapeHtml(stripHtml(it.desc || "").slice(0, 220));
+        if ((it.desc || "").length > 220) safeDesc += "…";
+        html += "<article class=\"card\" style=\"--tag:" + col + "\">";
+        html += "<span class=\"tag\">" + escapeHtml(it.game) + "</span>";
+        html += "<h3><a href=\"" + escapeAttr(it.link) + "\" target=\"_blank\" rel=\"noopener\">" + safeTitle + "</a></h3>";
+        html += "<div class=\"meta\">" + fmtTime(it.date) + " · <a href=\"" + escapeAttr(it.link) + "\" target=\"_blank\" rel=\"noopener\">打开原文</a></div>";
+        if (safeDesc) html += "<div class=\"desc\">" + safeDesc + "</div>";
+        html += "</article>";
+      });
+      html += "</div>";
+    });
+    root.innerHTML = html;
+  }
+
+  function escapeHtml(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function escapeAttr(s) {
+    return escapeHtml(s).replace(/'/g, "&#39;");
+  }
+
+  function stripHtml(s) {
+    var d = document.createElement("div");
+    d.innerHTML = s;
+    return d.textContent || d.innerText || "";
+  }
+
+  function parsePubDate(str) {
+    var d = new Date(str);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+
+  function classifyGame(title) {
+    var t = String(title || "");
+    if (/绝区零|Zenless Zone Zero|Zenless|\bZZZ\b/i.test(t)) return "绝区零";
+    if (/原神|Genshin Impact|\bGenshin\b/i.test(t)) return "原神";
+    if (/崩坏：星穹铁道|崩坏星穹铁道|星穹铁道|Honkai:\s*Star\s*Rail|\bHSR\b|Star\s*Rail/i.test(t)) return "崩坏：星穹铁道";
+    if (/崩坏\s*3|崩坏三|Honkai Impact 3|\bHI3\b/i.test(t)) return "崩坏3";
+    if (/明日方舟|Arknights|アークナイツ/i.test(t)) return "明日方舟";
+    return "";
+  }
+
+  function fetchRssUrl(rssUrl) {
+    var url = RSS2JSON + encodeURIComponent(rssUrl);
+    return fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.status !== "ok" || !data.items) return [];
+        return data.items.map(function (raw) {
+          return {
+            title: raw.title || "无标题",
+            date: parsePubDate(raw.pubDate),
+            link: raw.link || "#",
+            desc: raw.description || raw.content || ""
+          };
+        });
+      })
+      .catch(function () { return []; });
+  }
+
+  function mergeAndTag(arrays) {
+    var seen = {};
+    var out = [];
+    arrays.forEach(function (arr) {
+      arr.forEach(function (raw) {
+        var g = classifyGame(raw.title);
+        if (!g) return;
+        var key = (raw.link || "") + "|" + raw.title;
+        if (seen[key]) return;
+        seen[key] = true;
+        out.push({
+          game: g,
+          title: raw.title,
+          date: raw.date,
+          link: raw.link,
+          desc: raw.desc
+        });
+      });
+    });
+    out.sort(function (a, b) { return b.date - a.date; });
+    return out.slice(0, 80);
+  }
+
+  function saveCache() {
+    try {
+      var serial = items.map(function (it) {
+        return {
+          game: it.game,
+          title: it.title,
+          date: it.date.toISOString(),
+          link: it.link,
+          desc: it.desc
+        };
+      });
+      localStorage.setItem(STORAGE_CACHE, JSON.stringify(serial));
+    } catch (e) {}
+  }
+
+  function loadCache() {
+    try {
+      var raw = localStorage.getItem(STORAGE_CACHE);
+      if (!raw) return false;
+      var arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || !arr.length) return false;
+      items = arr.map(function (x) {
+        return {
+          game: x.game,
+          title: x.title,
+          date: new Date(x.date),
+          link: x.link,
+          desc: x.desc || ""
+        };
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function loadLocalBackup() {
+    items = FALLBACK.map(function (x) {
+      return { game: x.game, title: x.title, date: x.date, link: x.link, desc: x.desc };
+    });
+    render();
+    setStatus("<span class=\"warn\">网络或服务异常</span>，已切换为 <strong>本地演示数据</strong>。可稍后再次点击「立即同步」。");
+  }
+
+  function sync(showLoading) {
+    if (showLoading !== false) {
+      btn.disabled = true;
+      setStatus("正在拉取各游戏公开资讯，请稍候…");
+    }
+    Promise.all(RSS_FEEDS.map(fetchRssUrl))
+      .then(function (arrays) {
+        var merged = mergeAndTag(arrays);
+        if (merged.length === 0) {
+          var hadCache = loadCache();
+          if (!hadCache) loadLocalBackup();
+          else render();
+          lastSyncEl.textContent = new Date().toLocaleString("zh-CN") + "（本次无匹配或源暂不可用）";
+          try { localStorage.setItem(STORAGE_LAST, String(Date.now())); } catch (e) {}
+          setStatus("<span class=\"warn\">未匹配到相关资讯标题</span>，已显示 <strong>" + (hadCache ? "上次缓存" : "本地备份演示") + "</strong>。请稍后重试「立即同步」。");
+          btn.disabled = false;
+          return;
+        }
+        items = merged;
+        saveCache();
+        render();
+        var t = new Date().toLocaleString("zh-CN");
+        lastSyncEl.textContent = t;
+        try { localStorage.setItem(STORAGE_LAST, String(Date.now())); } catch (e) {}
+        setStatus("<span class=\"ok\">同步完成</span>，共 <strong>" + items.length + "</strong> 条相关资讯（自多源 RSS 标题匹配并入轴）。点击标题查看原文。");
+        btn.disabled = false;
+      })
+      .catch(function () {
+        var ok = loadCache();
+        if (!ok) loadLocalBackup();
+        else {
+          render();
+          setStatus("<span class=\"warn\">同步请求失败</span>，已显示 <strong>上次缓存</strong>。请检查网络后重试。");
+        }
+        lastSyncEl.textContent = new Date().toLocaleString("zh-CN") + "（失败，已用缓存/备份）";
+        btn.disabled = false;
+      });
+  }
+
+  function scheduleDaily() {
+    var DAY = 24 * 60 * 60 * 1000;
+    try {
+      var last = parseInt(localStorage.getItem(STORAGE_LAST) || "0", 10);
+      var elapsed = Date.now() - last;
+      if (!last || elapsed >= DAY) sync();
+      else {
+        if (loadCache()) {
+          render();
+          setStatus("每日自动同步：<strong>" + Math.round((DAY - elapsed) / 3600000) + "</strong> 小时后将再次拉取。当前显示上次缓存结果。可随时点击「立即同步」。");
+        } else {
+          setStatus("未到每日同步时间，且无本地缓存，正在拉取…");
+          sync();
+          return;
+        }
+        lastSyncEl.textContent = new Date(last).toLocaleString("zh-CN");
+      }
+    } catch (e) {
+      sync();
+    }
+    setInterval(function () {
+      try {
+        var last2 = parseInt(localStorage.getItem(STORAGE_LAST) || "0", 10);
+        if (Date.now() - last2 >= DAY) sync(false);
+      } catch (err) {}
+    }, 60 * 60 * 1000);
+  }
+
+  document.querySelectorAll(".game-filter").forEach(function (el) {
+    el.addEventListener("change", render);
+  });
+  btn.addEventListener("click", function () { sync(); });
+
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", scheduleDaily);
+  else
+    scheduleDaily();
+})();
+</script>
+</body>
+</html>
