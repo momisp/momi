@@ -309,9 +309,9 @@ textarea.field{min-height:120px;font-family:ui-monospace,Menlo,monospace;font-si
   function stashAuto(){ localStorage.setItem(LS.auto, $("autoDay").checked?"1":"0"); }
   function readAuto(){ try{ return (localStorage.getItem(LS.auto)||"1")==="1"; }catch(_e){ return true; } }
 
-  function maybeSilent(cfg){ if(!$("autoDay").checked || !readAuto()) return; var dn=dayCN(); if(localStorage.getItem(LS.day)===dn) return; silentFetch(cfg,true); }
+  function maybeSilent(cfg){ if(!$("autoDay").checked || !readAuto()) return; var dn=dayCN(); if(localStorage.getItem(LS.day)===dn) return; silentFetch(cfg); }
 
-  function silentFetch(cfg, first){
+  function silentFetch(cfg){
     stat("", "状态：<b>静默抓取进行中</b>...");
     crawl(cfg, !!$("useProxy").checked, function(){}, function(err, rows){
       if(err){
