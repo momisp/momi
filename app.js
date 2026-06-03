@@ -317,6 +317,247 @@
     render();
   };
 
+  function inferStatus(start, end) {
+    const t = today();
+    const s = parseDate(start);
+    const e = parseDate(end);
+    if (e < t) return 'done';
+    if (s <= t && t <= e) return 'doing';
+    return 'todo';
+  }
+
+  const SAMPLE_SCHEDULE = `源之蜂巢 1.2.6 + 零散需求排期
+项目周期
+开发：7 天｜06.03 - 06.10
+测试：2 天｜06.11 - 06.12
+验收：1天｜06.15
+需求明细
+一、OA 功能
+1.渠道激活：指定周期内，将登录、流水未达标渠道划入激活池
+2.开服表：列表排序调整为创建时间倒序
+3.角色查询：优化接口查询效率
+4.自动发放礼包：新增关键词搜索输入功能
+5.OA 移动端：下线账号密码登录，仅保留手机验证码登录
+二、管理后台
+1.调整联运游戏分发规则
+三、会长端
+1.扶持申请：删除页面指定文案
+2.游戏盒子申请：安卓、iOS 打包合并
+四、龙翔盒子后台
+1.新增礼包排序配置功能
+2.新增唯一码查看入口
+五、会长游戏落地页
+1.新增链接格式校验，非法链接禁止跳转访问
+原分包系统需求 顺延至7.2验收完毕`;
+
+  function mdToIso(m, d, year) {
+    return fmtDate(new Date(year, m - 1, d));
+  }
+
+  function parseScheduleText(text) {
+    const year = today().getFullYear();
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    let projectName = '';
+    let devRange = null;
+    const milestoneTasks = [];
+    const sectionMap = {};
+    let currentSection = '';
+    const extraProjects = [];
+
+    lines.forEach((line) => {
+      if (/^项目周期$|^需求明细$/.test(line)) return;
+
+      const deferMatch = line.match(/^(.+?)\s*顺延至\s*(\d{1,2})\.(\d{1,2})/);
+      if (deferMatch) {
+        const name = deferMatch[1].trim();
+        const end = mdToIso(+deferMatch[2], +deferMatch[3], year);
+        const start = devRange ? devRange.start : fmtDate(today());
+        extraProjects.push({
+          name: name.length > 20 ? name.slice(0, 20) : name,
+          tasks: [{ name: '顺延验收', start, end, status: inferStatus(start, end) }],
+        });
+        return;
+      }
+
+      const phaseMatch = line.match(/^([^：:]+)[：:]\s*(?:\d+\s*天\s*)?[｜|]\s*(\d{1,2})\.(\d{1,2})(?:\s*[-–~至到]\s*(\d{1,2})\.(\d{1,2}))?/);
+      if (phaseMatch && /开发|测试|验收|联调|上线|设计|评审/.test(phaseMatch[1])) {
+        const name = phaseMatch[1].trim();
+        const m1 = +phaseMatch[2];
+        const d1 = +phaseMatch[3];
+        const m2 = phaseMatch[4] ? +phaseMatch[4] : m1;
+        const d2 = phaseMatch[5] ? +phaseMatch[5] : d1;
+        const start = mdToIso(m1, d1, year);
+        const end = mdToIso(m2, d2, year);
+        milestoneTasks.push({ name, start, end, status: inferStatus(start, end) });
+        if (/开发/.test(name)) devRange = { start, end };
+        return;
+      }
+
+      const secMatch = line.match(/^[一二三四五六七八九十百]+、(.+)$/);
+      if (secMatch) {
+        currentSection = secMatch[1].trim();
+        if (!sectionMap[currentSection]) sectionMap[currentSection] = [];
+        return;
+      }
+
+      const reqMatch = line.match(/^\d+[.、]\s*(.+?)(?:[:：]|$)/);
+      if (reqMatch && currentSection) {
+        const taskName = reqMatch[1].trim();
+        const range = devRange || { start: fmtDate(today()), end: fmtDate(addDays(today(), 7)) };
+        sectionMap[currentSection].push({
+          name: taskName.length > 28 ? taskName.slice(0, 28) + '…' : taskName,
+          start: range.start,
+          end: range.end,
+          status: inferStatus(range.start, range.end),
+        });
+        return;
+      }
+
+      if (!projectName && !/^[\d一二三四五六七八九十]/.test(line) && line.length <= 60) {
+        projectName = line.replace(/\s*排期\s*$/, '').trim();
+      }
+    });
+
+    if (!projectName) projectName = '导入项目';
+
+    const result = [];
+    if (milestoneTasks.length) {
+      result.push({ name: projectName, tasks: milestoneTasks });
+    }
+    Object.keys(sectionMap).forEach((sec) => {
+      if (sectionMap[sec].length) {
+        result.push({ name: sec, tasks: sectionMap[sec] });
+      }
+    });
+    extraProjects.forEach((p) => result.push(p));
+
+    if (!result.length) {
+      throw new Error('未能识别排期内容，请检查格式（需含阶段日期或需求条目）');
+    }
+    return result;
+  }
+
+  function applyParsedProjects(parsed) {
+    projects = [];
+    tasks = [];
+    parsed.forEach((p) => {
+      const pid = 'p' + Date.now() + Math.random().toString(36).slice(2, 6);
+      projects.push({ id: pid, name: p.name });
+      p.tasks.forEach((tk) => {
+        tasks.push({
+          id: 't' + Date.now() + Math.random().toString(36).slice(2, 6),
+          projectId: pid,
+          name: tk.name,
+          start: tk.start,
+          end: tk.end,
+          status: tk.status,
+        });
+      });
+    });
+    render();
+    switchView('single');
+  }
+
+  let pendingImage = null;
+
+  function openModal() {
+    $('parseModal').classList.remove('hide');
+    $('parseInput').focus();
+  }
+
+  function closeModal() {
+    $('parseModal').classList.add('hide');
+    pendingImage = null;
+    $('imgPreview').classList.add('hide');
+    $('imgPreview').innerHTML = '';
+  }
+
+  function setParseLog(msg, type) {
+    const el = $('parseLog');
+    el.textContent = msg;
+    el.className = 'parse-log' + (type ? ' is-' + type : '');
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector('script[src="' + src + '"]')) {
+        resolve();
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ocrImage(file) {
+    setParseLog('正在识别图片文字…');
+    await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    const result = await Tesseract.recognize(file, 'chi_sim+eng', {
+      logger: (m) => {
+        if (m.status === 'recognizing text') {
+          setParseLog('识别中 ' + Math.round(m.progress * 100) + '%');
+        }
+      },
+    });
+    return result.data.text;
+  }
+
+  function handleImageFile(file) {
+    pendingImage = file;
+    const url = URL.createObjectURL(file);
+    $('imgPreview').innerHTML = '<img src="' + url + '" alt="粘贴的图片"><p>已贴入图片，点击「解析并生成」进行 OCR 识别</p>';
+    $('imgPreview').classList.remove('hide');
+    setParseLog('已贴入图片，点击「解析并生成」识别');
+  }
+
+  $('openParseBtn').onclick = openModal;
+  $('closeModal').onclick = closeModal;
+  $('modalBackdrop').onclick = closeModal;
+
+  $('parseSampleBtn').onclick = function () {
+    $('parseInput').value = SAMPLE_SCHEDULE;
+    setParseLog('已填入示例排期');
+  };
+
+  $('pasteZone').addEventListener('paste', function (e) {
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
+        handleImageFile(items[i].getAsFile());
+        return;
+      }
+    }
+  });
+
+  $('parseBtn').onclick = async function () {
+    let text = $('parseInput').value.trim();
+    try {
+      if (pendingImage) {
+        text = (await ocrImage(pendingImage)).trim();
+        $('parseInput').value = text;
+        pendingImage = null;
+        $('imgPreview').classList.add('hide');
+        $('imgPreview').innerHTML = '';
+      }
+      if (!text) {
+        setParseLog('请先粘贴文字或图片', 'error');
+        return;
+      }
+      const parsed = parseScheduleText(text);
+      const totalTasks = parsed.reduce((n, p) => n + p.tasks.length, 0);
+      applyParsedProjects(parsed);
+      closeModal();
+      setStatus('已解析 · ' + parsed.length + ' 个项目、' + totalTasks + ' 条任务');
+    } catch (err) {
+      setParseLog(err.message || '解析失败', 'error');
+    }
+  };
+
   $('demoBtn').onclick = function () {
     const t = today();
     projects = [
