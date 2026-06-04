@@ -2,6 +2,7 @@
   const DAY_W = 32;
   const MINI_W = 22;
   const PCOLORS = ['#2563eb', '#7c3aed', '#db2777', '#d97706', '#059669', '#dc2626'];
+  const STORAGE_KEY = 'gantt-schedule-v1';
   let projects = [];
   let tasks = [];
   let view = 'single';
@@ -9,6 +10,27 @@
 
   const $ = (id) => document.getElementById(id);
   const statusBar = $('statusBar');
+
+  function persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ projects, tasks }));
+    } catch (e) {
+      /* 隐私模式或配额满时忽略 */
+    }
+  }
+
+  function loadStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.projects)) projects = data.projects;
+      if (Array.isArray(data.tasks)) tasks = data.tasks;
+      return projects.length > 0 || tasks.length > 0;
+    } catch (e) {
+      return false;
+    }
+  }
 
   function today() {
     const d = new Date();
@@ -209,6 +231,7 @@
     refreshProjectSelect();
     renderSingle();
     renderMulti();
+    persist();
   }
 
   function switchView(v) {
@@ -586,5 +609,9 @@
   const t = today();
   $('startDate').value = fmtDate(t);
   $('endDate').value = fmtDate(addDays(t, 4));
+  const restored = loadStorage();
   render();
+  if (restored) {
+    setStatus('已从浏览器恢复 · ' + projects.length + ' 个项目、' + tasks.length + ' 条任务（关服务不影响，数据在本地）');
+  }
 })();
