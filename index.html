@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>墨秘 momi — 辅助写小说</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #161a22;
+      --panel2: #1c212b;
+      --border: #2a3140;
+      --text: #e8eaed;
+      --muted: #8b93a7;
+      --accent: #3dd6c6;
+      --accent2: #f0b429;
+      --danger: #f07178;
+      --ok: #7fd962;
+      --radius: 10px;
+      --font-ui: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      --font-body: "Source Han Serif SC", "Noto Serif SC", Georgia, serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    button, input, textarea, select {
+      font: inherit;
+      color: inherit;
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      border-radius: 8px;
+      padding: 6px 12px;
+      transition: background .15s, border-color .15s;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    button.primary {
+      background: linear-gradient(135deg, #2a8f85, var(--accent));
+      border-color: transparent;
+      color: #0a0e0d;
+      font-weight: 600;
+    }
+    button.ghost { background: transparent; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      flex-shrink: 0;
+    }
+    .brand { font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
+    .brand span { color: var(--accent); font-weight: 400; font-size: .85em; margin-left: 6px; }
+    .topbar select {
+      min-width: 160px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+    .spacer { flex: 1; }
+    .save-status { font-size: .85rem; color: var(--muted); }
+    .save-status.ok { color: var(--ok); }
+    .save-status.err { color: var(--danger); }
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr 320px;
+      flex: 1;
+      min-height: 0;
+    }
+    @media (max-width: 1024px) {
+      .layout { grid-template-columns: 56px 1fr 280px; }
+      .sidebar .panel-title, .sidebar .chapter-meta, .sidebar .progress-label { display: none; }
+    }
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar, .assist { display: none; }
+      .sidebar.open, .assist.open {
+        display: flex;
+        position: fixed;
+        inset: 48px 0 0 0;
+        z-index: 20;
+        max-width: 100%;
+      }
+      .mobile-bar { display: flex !important; }
+    }
+    .mobile-bar {
+      display: none;
+      gap: 8px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .panel {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .panel:last-child { border-right: none; border-left: 1px solid var(--border); }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: .9rem;
+      font-weight: 600;
+    }
+    .chapter-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .chapter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .88rem;
+      border: 1px solid transparent;
+    }
+    .chapter-item:hover { background: var(--panel2); }
+    .chapter-item.active {
+      background: rgba(61, 214, 198, .12);
+      border-color: rgba(61, 214, 198, .35);
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .status-dot.wip { background: var(--accent2); }
+    .status-dot.done { background: var(--ok); }
+    .progress-wrap { padding: 12px 14px; border-top: 1px solid var(--border); }
+    .progress-bar {
+      height: 6px;
+      background: var(--panel2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-bar > div {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width .3s;
+    }
+    .editor-wrap {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg);
+    }
+    .chapter-title-input {
+      margin: 16px 20px 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 8px;
+      width: calc(100% - 40px);
+      font-family: var(--font-ui);
+    }
+    .chapter-summary {
+      margin: 8px 20px 0;
+      font-size: .82rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .editor-toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 20px;
+      flex-wrap: wrap;
+    }
+    .editor-body {
+      flex: 1;
+      margin: 0 20px 12px;
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #12151c;
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      line-height: 1.85;
+      overflow-y: auto;
+      min-height: 200px;
+      outline: none;
+    }
+    .editor-body:focus { border-color: rgba(61, 214, 198, .5); }
+    .editor-footer {
+      display: flex;
+      gap: 16px;
+      padding: 8px 20px 14px;
+      font-size: .82rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 8px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .tab {
+      padding: 10px 12px;
+      font-size: .8rem;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-pane { display: none; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; }
+    .tab-pane.active { display: flex; }
+    .ai-actions { display: flex; gap: 8px; padding: 12px; flex-wrap: wrap; }
+    .ai-input {
+      margin: 0 12px;
+      min-height: 72px;
+      resize: vertical;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      width: calc(100% - 24px);
+    }
+    .ai-output {
+      flex: 1;
+      margin: 12px;
+      padding: 12px;
+      background: var(--panel2);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      overflow-y: auto;
+      font-size: .9rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+    .ai-output.has-text { color: var(--text); }
+    .ai-output-actions { display: flex; gap: 8px; padding: 0 12px 12px; }
+    .list-pane { flex: 1; overflow-y: auto; padding: 8px 12px; }
+    .card-item {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-size: .88rem;
+    }
+    .card-item.active { border-color: var(--accent); background: rgba(61,214,198,.08); }
+    .form-pane { padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .form-pane label { font-size: .75rem; color: var(--muted); display: block; margin-bottom: 4px; }
+    .form-pane input, .form-pane textarea {
+      width: 100%;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .form-pane textarea { min-height: 80px; resize: vertical; }
+    .split { display: grid; grid-template-rows: 1fr 1fr; min-height: 0; flex: 1; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 8px;
+      z-index: 100;
+      display: none;
+    }
+    .toast.show { display: block; }
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      min-width: 320px;
+      max-width: 90vw;
+    }
+    .modal h3 { margin-bottom: 12px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    .focus-mode .sidebar, .focus-mode .assist, .focus-mode .topbar .extra { display: none !important; }
+    .focus-mode .layout { grid-template-columns: 1fr !important; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">墨秘 <span>momi</span></div>
+    <select id="workSelect" aria-label="切换作品"></select>
+    <button type="button" id="btnNewWork" class="ghost">+ 新建作品</button>
+    <div class="spacer"></div>
+    <span id="saveStatus" class="save-status">已保存</span>
+    <button type="button" id="btnExport" class="extra">导出</button>
+    <button type="button" id="btnSettings" class="extra ghost" title="设置">⚙</button>
+  </header>
+
+  <div class="mobile-bar">
+    <button type="button" id="btnToggleSidebar">章节</button>
+    <button type="button" id="btnToggleAssist">助手</button>
+  </div>
+
+  <div class="layout" id="layout">
+    <aside class="panel sidebar" id="sidebar">
+      <div class="panel-head">
+        <span class="panel-title">章节</span>
+        <button type="button" id="btnNewChapter" class="primary" style="padding:4px 10px;font-size:.8rem">+ 新建</button>
+      </div>
+      <div class="chapter-list" id="chapterList"></div>
+      <div class="progress-wrap">
+        <div class="progress-label">全书进度</div>
+        <div class="progress-bar"><div id="progressFill"></div></div>
+      </div>
+    </aside>
+
+    <main class="editor-wrap" id="editorWrap">
+      <div id="emptyWorks" class="empty-state" style="display:none">
+        <p>还没有作品</p>
+        <button type="button" class="primary" id="btnEmptyNewWork">创建第一部作品</button>
+      </div>
+      <div id="emptyChapters" class="empty-state" style="display:none">
+        <p>该作品还没有章节</p>
+        <button type="button" class="primary" id="btnEmptyNewChapter">创建第一章</button>
+      </div>
+      <div id="editorMain" style="display:none;flex:1;flex-direction:column;min-height:0">
+        <input type="text" class="chapter-title-input" id="chapterTitle" placeholder="章节标题" />
+        <p class="chapter-summary" id="chapterSummary"></p>
+        <div class="editor-toolbar">
+          <button type="button" id="btnFocus">专注模式</button>
+          <button type="button" id="btnPreview">预览</button>
+        </div>
+        <div class="editor-body" id="editorBody" contenteditable="true" spellcheck="true"></div>
+        <footer class="editor-footer">
+          <span>本章 <strong id="wordCount">0</strong> 字</span>
+          <span>今日 <strong id="wordToday">0</strong> 字</span>
+        </footer>
+      </div>
+    </main>
+
+    <aside class="panel assist" id="assist">
+      <div class="tabs" role="tablist">
+        <div class="tab active" data-tab="ai" role="tab">AI 助手</div>
+        <div class="tab" data-tab="chars" role="tab">角色</div>
+        <div class="tab" data-tab="world" role="tab">世界观</div>
+        <div class="tab" data-tab="outline" role="tab">大纲</div>
+        <div class="tab" data-tab="ideas" role="tab">灵感</div>
+      </div>
+
+      <div class="tab-pane active" id="pane-ai">
+        <div class="ai-actions">
+          <button type="button" class="primary" id="btnContinue">续写</button>
+          <button type="button" id="btnPolish">润色</button>
+          <button type="button" id="btnExpand">扩写</button>
+        </div>
+        <textarea class="ai-input" id="aiPrompt" placeholder="输入创作指令，例如：主角在雨夜发现神秘信件…"></textarea>
+        <div class="ai-output" id="aiOutput">AI 生成内容将显示在这里（首期 Mock，可在设置中配置真实 API）</div>
+        <div class="ai-output-actions">
+          <button type="button" id="btnInsert">插入光标处</button>
+          <button type="button" id="btnReplace">替换全文</button>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="pane-chars">
+        <div class="split">
+          <div class="list-pane" id="charList"></div>
+          <div class="form-pane" id="charForm">
+            <p style="color:var(--muted);font-size:.85rem">选择或新建角色</p>
+          </div>
+        </div>
+        <button type="button" id="btnAddChar" style="margin:8px 12px">+ 添加角色</button>
+      </div>
+
+      <div class="tab-pane" id="pane-world">
+        <div class="form-pane">
+          <div><label>时代背景</label><textarea id="worldEra"></textarea></div>
+          <div><label>地理版图</label><textarea id="worldGeo"></textarea></div>
+          <div><label>势力组织</label><textarea id="worldFactions"></textarea></div>
+          <div><label>核心规则</label><textarea id="worldRules"></textarea></div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="pane-outline">
+        <div class="form-pane">
+          <div><label>全书摘要</label><textarea id="outlineBook"></textarea></div>
+          <div><label>当前章梗概</label><textarea id="outlineChapter"></textarea></div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="pane-ideas">
+        <div class="list-pane" id="ideaList"></div>
+        <button type="button" id="btnAddIdea" style="margin:8px 12px">+ 记录灵感</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="modalUnsaved">
+    <div class="modal">
+      <h3>未保存的修改</h3>
+      <p style="color:var(--muted);font-size:.9rem">切换章节前是否保存当前内容？</p>
+      <div class="modal-actions">
+        <button type="button" id="unsavedCancel">取消</button>
+        <button type="button" id="unsavedDiscard">不保存</button>
+        <button type="button" class="primary" id="unsavedSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalSettings">
+    <div class="modal">
+      <h3>设置</h3>
+      <div class="form-pane">
+        <div><label>AI API Base URL（OpenAI 兼容，留空则 Mock）</label><input type="url" id="apiBase" placeholder="https://api.openai.com/v1" /></div>
+        <div><label>API Key（仅保存在本机）</label><input type="password" id="apiKey" autocomplete="off" /></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="settingsClose">关闭</button>
+        <button type="button" class="primary" id="settingsSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const STORAGE_KEY = "momi_novel_v1";
+  const defaultWork = () => ({
+    id: crypto.randomUUID(),
+    title: "未命名作品",
+    outlineBook: "",
+    world: { era: "", geo: "", factions: "", rules: "" },
+    characters: [],
+    ideas: [],
+    chapters: []
+  });
+  const defaultChapter = (n) => ({
+    id: crypto.randomUUID(),
+    title: "第" + n + "章",
+    summary: "",
+    body: "",
+    status: "wip"
+  });
+
+  let state = load();
+  let currentWorkId = state.currentWorkId;
+  let currentChapterId = state.currentChapterId;
+  let dirty = false;
+  let pendingChapterId = null;
+  let saveTimer = null;
+
+  const $ = (id) => document.getElementById(id);
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    const w = defaultWork();
+    w.title = "星辰大海";
+    w.outlineBook = "少年意外获得星际坐标，踏上文明重启之旅。";
+    const c1 = defaultChapter(1);
+    c1.title = "第一章 觉醒";
+    c1.summary = "主角在废弃天文台收到未知信号。";
+    c1.body = "夜色像墨一样泼在山脊上。\n\n林远攥着生锈的扳手，最后一次校准了射电望远镜的角度。";
+    c1.status = "done";
+    w.chapters.push(c1);
+    w.characters.push({ id: crypto.randomUUID(), name: "林远", role: "主角", personality: "冷静、执拗", relations: "导师：沈教授" });
+    return { works: [w], currentWorkId: w.id, currentChapterId: c1.id, settings: {}, wordTodayDate: "", wordTodayCount: 0 };
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    dirty = false;
+    setSaveStatus("ok", "已保存");
+  }
+
+  function getWork() {
+    return state.works.find((w) => w.id === currentWorkId);
+  }
+
+  function getChapter(work) {
+    return work && work.chapters.find((c) => c.id === currentChapterId);
+  }
+
+  function setSaveStatus(kind, text) {
+    const el = $("saveStatus");
+    el.textContent = text;
+    el.className = "save-status" + (kind === "ok" ? " ok" : kind === "err" ? " err" : "");
+  }
+
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
+  function countWords(text) {
+    return (text || "").replace(/\s/g, "").length;
+  }
+
+  function markDirty() {
+    if (!dirty) {
+      dirty = true;
+      setSaveStatus("", "编辑中…");
+    }
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      persistEditorToChapter();
+      save();
+    }, 1200);
+  }
+
+  function persistEditorToChapter() {
+    const work = getWork();
+    const ch = getChapter(work);
+    if (!ch) return;
+    ch.title = $("chapterTitle").value.trim() || ch.title;
+    ch.body = $("editorBody").innerText;
+    const oc = $("outlineChapter");
+    if (oc) ch.summary = oc.value.trim();
+    $("wordCount").textContent = countWords(ch.body);
+    updateTodayWords();
+    renderProgress(work);
+  }
+
+  function updateTodayWords() {
+    const d = new Date().toDateString();
+    if (state.wordTodayDate !== d) {
+      state.wordTodayDate = d;
+      state.wordTodayCount = 0;
+    }
+    const work = getWork();
+    const ch = getChapter(work);
+    if (ch) {
+      const stored = ch._lastCount || 0;
+      const now = countWords(ch.body);
+      const delta = Math.max(0, now - stored);
+      if (delta) state.wordTodayCount += delta;
+      ch._lastCount = now;
+    }
+    $("wordToday").textContent = state.wordTodayCount;
+  }
+
+  function renderWorkSelect() {
+    const sel = $("workSelect");
+    sel.innerHTML = "";
+    state.works.forEach((w) => {
+      const o = document.createElement("option");
+      o.value = w.id;
+      o.textContent = w.title;
+      if (w.id === currentWorkId) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+
+  function renderChapters() {
+    const work = getWork();
+    const list = $("chapterList");
+    list.innerHTML = "";
+    if (!work) return;
+    work.chapters.forEach((ch) => {
+      const div = document.createElement("div");
+      div.className = "chapter-item" + (ch.id === currentChapterId ? " active" : "");
+      const dot = document.createElement("span");
+      dot.className = "status-dot " + (ch.status === "done" ? "done" : ch.status === "wip" ? "wip" : "");
+      const span = document.createElement("span");
+      span.textContent = ch.title;
+      div.appendChild(dot);
+      div.appendChild(span);
+      div.onclick = () => switchChapter(ch.id);
+      list.appendChild(div);
+    });
+  }
+
+  function renderProgress(work) {
+    if (!work || !work.chapters.length) {
+      $("progressFill").style.width = "0%";
+      return;
+    }
+    const done = work.chapters.filter((c) => c.status === "done").length;
+    const pct = Math.round((done / work.chapters.length) * 100);
+    $("progressFill").style.width = pct + "%";
+  }
+
+  function renderEditor() {
+    const work = getWork();
+    const hasWorks = state.works.length > 0;
+    $("emptyWorks").style.display = hasWorks ? "none" : "flex";
+    if (!hasWorks) {
+      $("editorMain").style.display = "none";
+      $("emptyChapters").style.display = "none";
+      return;
+    }
+    const ch = getChapter(work);
+    const hasCh = work && work.chapters.length > 0 && ch;
+    $("emptyChapters").style.display = work && work.chapters.length === 0 ? "flex" : "none";
+    $("editorMain").style.display = hasCh ? "flex" : "none";
+    if (!hasCh) return;
+    $("chapterTitle").value = ch.title;
+    $("chapterSummary").textContent = ch.summary ? "本章梗概：" + ch.summary : "";
+    $("editorBody").innerText = ch.body || "";
+    $("wordCount").textContent = countWords(ch.body);
+    $("outlineBook").value = work.outlineBook || "";
+    $("outlineChapter").value = ch.summary || "";
+    $("worldEra").value = work.world.era || "";
+    $("worldGeo").value = work.world.geo || "";
+    $("worldFactions").value = work.world.factions || "";
+    $("worldRules").value = work.world.rules || "";
+    ch._lastCount = countWords(ch.body);
+    renderChars(work);
+    renderIdeas(work);
+  }
+
+  function renderChars(work) {
+    const list = $("charList");
+    list.innerHTML = "";
+    work.characters.forEach((c) => {
+      const div = document.createElement("div");
+      div.className = "card-item";
+      div.textContent = c.name + (c.role ? " · " + c.role : "");
+      div.onclick = () => showCharForm(work, c.id);
+      list.appendChild(div);
+    });
+    $("charForm").innerHTML = work.characters.length
+      ? ""
+      : '<p style="color:var(--muted);font-size:.85rem">暂无角色，点击下方添加</p>';
+  }
+
+  function showCharForm(work, id) {
+    const c = work.characters.find((x) => x.id === id);
+    if (!c) return;
+    const form = $("charForm");
+    form.innerHTML = `
+      <div><label>姓名</label><input data-f="name" value="${escapeAttr(c.name)}" /></div>
+      <div><label>身份</label><input data-f="role" value="${escapeAttr(c.role || "")}" /></div>
+      <div><label>性格</label><textarea data-f="personality">${escapeHtml(c.personality || "")}</textarea></div>
+      <div><label>关系</label><textarea data-f="relations">${escapeHtml(c.relations || "")}</textarea></div>
+    `;
+    form.querySelectorAll("[data-f]").forEach((el) => {
+      el.oninput = () => {
+        c[el.dataset.f] = el.value;
+        markDirty();
+        save();
+        renderChars(work);
+      };
+    });
+  }
+
+  function escapeAttr(s) {
+    return String(s).replace(/"/g, "&quot;");
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  }
+
+  function renderIdeas(work) {
+    const list = $("ideaList");
+    list.innerHTML = "";
+    work.ideas.forEach((idea) => {
+      const div = document.createElement("div");
+      div.className = "card-item";
+      div.textContent = idea.text;
+      list.appendChild(div);
+    });
+  }
+
+  function switchChapter(id) {
+    if (id === currentChapterId) return;
+    if (dirty) {
+      pendingChapterId = id;
+      $("modalUnsaved").classList.add("show");
+      return;
+    }
+    persistEditorToChapter();
+    currentChapterId = id;
+    state.currentChapterId = id;
+    save();
+    renderChapters();
+    renderEditor();
+  }
+
+  function mockAi(type, prompt, context) {
+    const snippets = {
+      continue: [
+        "信号在耳机里凝成一行坐标，指向银河系悬臂外侧一个从未命名的空域。",
+        "林远迟疑片刻，仍将坐标写进日志——他知道自己再也回不到普通人的夜晚了。"
+      ],
+      polish: "夜色如山脊倾泻，林远指节发白，最后一次拧紧生锈的扳手，将射电望远镜对准深空。",
+      expand: "暴雨在铁皮屋顶上奔涌。望远镜的嗡鸣与心跳叠在一起，仿佛整片山谷都在等待那一声来自星际的应答。"
+    };
+    const base = snippets[type] || snippets.continue;
+    const hint = prompt ? "（按指令：" + prompt.slice(0, 40) + "）" : "";
+    return base.join("\n\n") + hint + "\n\n—— Mock 生成，配置 API 后可接入真实模型。";
+  }
+
+  async function runAi(type) {
+    const work = getWork();
+    const ch = getChapter(work);
+    if (!ch) return toast("请先选择章节");
+    const prompt = $("aiPrompt").value.trim();
+    const selection = window.getSelection().toString();
+    if ((type === "polish" || type === "expand") && !selection) {
+      toast("请先选中要润色/扩写的正文");
+      return;
+    }
+    const out = $("aiOutput");
+    out.classList.remove("has-text");
+    out.textContent = "生成中…";
+    const settings = state.settings || {};
+    let text;
+    if (settings.apiBase && settings.apiKey) {
+      try {
+        text = await callApi(settings, type, prompt, ch, work, selection);
+      } catch (e) {
+        out.textContent = "请求失败：" + e.message;
+        setSaveStatus("err", "AI 失败");
+        return;
+      }
+    } else {
+      await new Promise((r) => setTimeout(r, 800));
+      text = mockAi(type, prompt, ch.body);
+      if (type === "polish" && selection) text = mockAi("polish", prompt) + "\n\n[原文]\n" + selection;
+    }
+    out.textContent = text;
+    out.classList.add("has-text");
+  }
+
+  async function callApi(settings, type, prompt, ch, work, selection) {
+    const sys = "你是小说写作助手，请用简体中文输出。";
+    const user = [
+      "作品：" + work.title,
+      "设定：" + (work.outlineBook || ""),
+      "本章：" + ch.title,
+      "前文：" + (ch.body || "").slice(-1500),
+      "任务：" + type,
+      prompt,
+      selection ? "选中片段：" + selection : ""
+    ].join("\n");
+    const res = await fetch(settings.apiBase.replace(/\/$/, "") + "/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + settings.apiKey
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+        max_tokens: 800
+      })
+    });
+    if (!res.ok) throw new Error(res.status + " " + (await res.text()).slice(0, 120));
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || "(空响应)";
+  }
+
+  function insertAi(atEnd) {
+    const text = $("aiOutput").textContent;
+    if (!text || text === "生成中…" || text.startsWith("AI 生成")) return toast("无可插入内容");
+    const el = $("editorBody");
+    if (atEnd) {
+      el.innerText = text;
+    } else {
+      el.focus();
+      document.execCommand("insertText", false, "\n\n" + text);
+    }
+    markDirty();
+    persistEditorToChapter();
+    save();
+    toast("已写入正文");
+  }
+
+  function exportWork() {
+    const work = getWork();
+    if (!work) return toast("无作品可导出");
+    persistEditorToChapter();
+    let md = "# " + work.title + "\n\n";
+    if (work.outlineBook) md += "> " + work.outlineBook + "\n\n";
+    work.chapters.forEach((c) => {
+      md += "## " + c.title + "\n\n";
+      if (c.summary) md += "*" + c.summary + "*\n\n";
+      md += (c.body || "") + "\n\n";
+    });
+    const blob = new Blob([md], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = work.title + ".txt";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast("已导出");
+  }
+
+  // Events
+  $("workSelect").onchange = (e) => {
+    persistEditorToChapter();
+    currentWorkId = e.target.value;
+    state.currentWorkId = currentWorkId;
+    const work = getWork();
+    currentChapterId = work.chapters[0]?.id || null;
+    state.currentChapterId = currentChapterId;
+    save();
+    renderChapters();
+    renderEditor();
+  };
+
+  $("btnNewWork").onclick = $("btnEmptyNewWork").onclick = () => {
+    const w = defaultWork();
+    state.works.push(w);
+    currentWorkId = w.id;
+    currentChapterId = null;
+    state.currentWorkId = w.id;
+    state.currentChapterId = null;
+    save();
+    renderWorkSelect();
+    renderChapters();
+    renderEditor();
+    toast("已创建作品");
+  };
+
+  $("btnNewChapter").onclick = $("btnEmptyNewChapter").onclick = () => {
+    const work = getWork();
+    if (!work) return;
+    const n = work.chapters.length + 1;
+    const ch = defaultChapter(n);
+    work.chapters.push(ch);
+    currentChapterId = ch.id;
+    state.currentChapterId = ch.id;
+    save();
+    renderChapters();
+    renderEditor();
+  };
+
+  $("chapterTitle").oninput = markDirty;
+  $("editorBody").oninput = markDirty;
+  $("outlineBook").oninput = $("outlineChapter").oninput = () => {
+    const work = getWork();
+    const ch = getChapter(work);
+    if (work) work.outlineBook = $("outlineBook").value;
+    if (ch) {
+      ch.summary = $("outlineChapter").value;
+      $("chapterSummary").textContent = ch.summary ? "本章梗概：" + ch.summary : "";
+    }
+    markDirty();
+  };
+  ["worldEra", "worldGeo", "worldFactions", "worldRules"].forEach((id) => {
+    $(id).oninput = () => {
+      const work = getWork();
+      if (!work) return;
+      work.world.era = $("worldEra").value;
+      work.world.geo = $("worldGeo").value;
+      work.world.factions = $("worldFactions").value;
+      work.world.rules = $("worldRules").value;
+      markDirty();
+    };
+  });
+
+  $("btnContinue").onclick = () => runAi("continue");
+  $("btnPolish").onclick = () => runAi("polish");
+  $("btnExpand").onclick = () => runAi("expand");
+  $("btnInsert").onclick = () => insertAi(false);
+  $("btnReplace").onclick = () => insertAi(true);
+  $("btnExport").onclick = exportWork;
+
+  $("btnAddChar").onclick = () => {
+    const work = getWork();
+    if (!work) return;
+    const c = { id: crypto.randomUUID(), name: "新角色", role: "", personality: "", relations: "" };
+    work.characters.push(c);
+    save();
+    renderChars(work);
+    showCharForm(work, c.id);
+  };
+
+  $("btnAddIdea").onclick = () => {
+    const text = prompt("灵感内容：");
+    if (!text) return;
+    const work = getWork();
+    work.ideas.push({ id: crypto.randomUUID(), text });
+    save();
+    renderIdeas(work);
+  };
+
+  $("unsavedCancel").onclick = () => {
+    $("modalUnsaved").classList.remove("show");
+    pendingChapterId = null;
+  };
+  $("unsavedDiscard").onclick = () => {
+    dirty = false;
+    $("modalUnsaved").classList.remove("show");
+    if (pendingChapterId) switchChapter(pendingChapterId);
+    pendingChapterId = null;
+  };
+  $("unsavedSave").onclick = () => {
+    persistEditorToChapter();
+    save();
+    dirty = false;
+    $("modalUnsaved").classList.remove("show");
+    const id = pendingChapterId;
+    pendingChapterId = null;
+    if (id) {
+      currentChapterId = id;
+      state.currentChapterId = id;
+      renderChapters();
+      renderEditor();
+    }
+  };
+
+  $("btnSettings").onclick = () => {
+    $("apiBase").value = state.settings?.apiBase || "";
+    $("apiKey").value = state.settings?.apiKey || "";
+    $("modalSettings").classList.add("show");
+  };
+  $("settingsClose").onclick = () => $("modalSettings").classList.remove("show");
+  $("settingsSave").onclick = () => {
+    state.settings = {
+      apiBase: $("apiBase").value.trim(),
+      apiKey: $("apiKey").value.trim()
+    };
+    save();
+    $("modalSettings").classList.remove("show");
+    toast("设置已保存");
+  };
+
+  $("btnFocus").onclick = () => document.body.classList.toggle("focus-mode");
+  $("btnPreview").onclick = () => {
+    const work = getWork();
+    const ch = getChapter(work);
+    if (!ch) return;
+    const w = window.open("", "_blank");
+    w.document.write("<pre style='font-family:serif;padding:24px;line-height:1.8'>" + escapeHtml(ch.title + "\n\n" + (ch.body || "")) + "</pre>");
+  };
+
+  $("btnToggleSidebar").onclick = () => $("sidebar").classList.toggle("open");
+  $("btnToggleAssist").onclick = () => $("assist").classList.toggle("open");
+
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.onclick = () => {
+      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach((p) => p.classList.remove("active"));
+      tab.classList.add("active");
+      $("pane-" + tab.dataset.tab).classList.add("active");
+    };
+  });
+
+  // Init
+  if (!currentWorkId && state.works[0]) currentWorkId = state.works[0].id;
+  if (!currentChapterId && getWork()?.chapters[0]) currentChapterId = getWork().chapters[0].id;
+  state.currentWorkId = currentWorkId;
+  state.currentChapterId = currentChapterId;
+  renderWorkSelect();
+  renderChapters();
+  renderEditor();
+  renderProgress(getWork());
+  save();
+})();
+  </script>
+</body>
+</html>
