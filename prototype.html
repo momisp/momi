@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>项目排期甘特图</title>
+<style>
+:root {
+  --bg: #f4f6f9;
+  --surface: #fff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --bar-colors: #3b82f6, #8b5cf6, #06b6d4, #f59e0b, #10b981, #ec4899;
+  --radius: 10px;
+  --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+header p {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.badge {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e0e7ff;
+  color: var(--primary);
+  transition: opacity var(--transition), transform var(--transition);
+}
+.badge.hidden { opacity: 0; transform: scale(0.9); pointer-events: none; }
+.badge.success { background: #d1fae5; color: var(--success); }
+.badge.warn { background: #fef3c7; color: var(--warning); }
+.badge.error { background: #fee2e2; color: var(--danger); }
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+  min-width: 260px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--primary);
+  font-size: 0.875rem;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast.success { border-left-color: var(--success); }
+.toast.error { border-left-color: var(--danger); }
+.toast.warn { border-left-color: var(--warning); }
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+}
+.panel {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.panel-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel-body { padding: 16px; }
+.form-group { margin-bottom: 12px; }
+.form-group label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.form-group input.invalid {
+  border-color: var(--danger);
+  animation: shake 0.4s ease;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.field-error {
+  font-size: 0.7rem;
+  color: var(--danger);
+  margin-top: 4px;
+  min-height: 1em;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.field-error.visible { opacity: 1; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  transition: background var(--transition), transform 0.15s ease, opacity var(--transition);
+}
+button:active:not(:disabled) { transform: scale(0.97); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-ghost { background: #f1f5f9; color: var(--text); }
+.btn-ghost:hover:not(:disabled) { background: #e2e8f0; }
+.btn-danger { background: #fee2e2; color: var(--danger); }
+.btn-danger:hover:not(:disabled) { background: #fecaca; }
+.task-list { list-style: none; max-height: 320px; overflow-y: auto; }
+.task-list li {
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  transition: background var(--transition), padding-left var(--transition);
+  border: 1px solid transparent;
+}
+.task-list li:hover { background: #f8fafc; }
+.task-list li.active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  padding-left: 16px;
+}
+.task-list li .dates { color: var(--muted); font-size: 0.7rem; }
+.task-list .empty-hint {
+  text-align: center;
+  padding: 32px 12px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  cursor: default;
+}
+.task-list .empty-hint svg { display: block; margin: 0 auto 12px; opacity: 0.5; }
+.gantt-wrap { min-height: 420px; position: relative; }
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #fafbfc;
+}
+.toolbar label { font-size: 0.75rem; color: var(--muted); }
+.toolbar select {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 0.8125rem;
+}
+.gantt-scroll {
+  overflow-x: auto;
+  padding: 0 0 12px;
+}
+.gantt-grid {
+  display: grid;
+  min-width: 700px;
+}
+.gantt-header {
+  display: contents;
+}
+.gantt-header .cell {
+  padding: 8px 4px;
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.gantt-header .cell.today {
+  color: var(--primary);
+  font-weight: 600;
+  background: #eff6ff;
+}
+.gantt-row {
+  display: contents;
+}
+.gantt-row .label-cell {
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gantt-row .track-cell {
+  grid-column: 2 / -1;
+  position: relative;
+  height: 44px;
+  border-bottom: 1px solid var(--border);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent calc(100% / var(--days) - 1px),
+    #f1f5f9 calc(100% / var(--days) - 1px),
+    #f1f5f9 calc(100% / var(--days))
+  );
+}
+.bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) scaleX(0.3);
+  height: 22px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  opacity: 0;
+  animation: barIn 0.45s ease forwards;
+  transition: box-shadow var(--transition), filter var(--transition);
+}
+.bar:hover { filter: brightness(1.08); box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+.bar.dragging { cursor: grabbing; opacity: 0.85; z-index: 5; }
+@keyframes barIn {
+  to { transform: translateY(-50%) scaleX(1); opacity: 1; }
+}
+.today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--primary);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 3;
+}
+.empty-gantt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--muted);
+  animation: fadeIn 0.5s ease;
+}
+.empty-gantt.hidden { display: none; }
+.empty-gantt h3 { font-size: 1rem; color: var(--text); margin: 12px 0 6px; font-weight: 600; }
+.empty-gantt p { font-size: 0.8125rem; max-width: 280px; }
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e0e7ff, #f1f5f9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition);
+}
+.loading-overlay.show { opacity: 1; pointer-events: auto; }
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+.legend span { display: flex; align-items: center; gap: 4px; }
+.legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.stats {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  margin-top: 12px;
+}
+</style>
+</head>
+<body>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="app">
+  <header>
+    <div>
+      <h1>项目排期甘特图</h1>
+      <p>拖拽任务条调整时间 · 左侧表单增删改 · 体验增强演示版</p>
+    </div>
+    <div class="status-bar">
+      <span class="badge" id="badgeSaving">保存中…</span>
+      <span class="badge success hidden" id="badgeOk">已同步</span>
+      <span class="badge" id="badgeCount">0 项任务</span>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="panel">
+      <div class="panel-head">
+        <span>任务管理</span>
+        <button type="button" class="btn-ghost" id="btnDemo" title="加载示例">示例</button>
+      </div>
+      <div class="panel-body">
+        <form id="taskForm" novalidate>
+          <div class="form-group">
+            <label for="taskName">任务名称</label>
+            <input type="text" id="taskName" placeholder="例如：需求评审" maxlength="40" autocomplete="off">
+            <div class="field-error" id="errName">请输入 2～40 个字符</div>
+          </div>
+          <div class="form-group">
+            <label for="taskStart">开始日期</label>
+            <input type="date" id="taskStart">
+            <div class="field-error" id="errStart">开始日期无效</div>
+          </div>
+          <div class="form-group">
+            <label for="taskEnd">结束日期</label>
+            <input type="date" id="taskEnd">
+            <div class="field-error" id="errEnd">结束日期不能早于开始日期</div>
+          </div>
+          <div class="form-group">
+            <label for="taskOwner">负责人</label>
+            <select id="taskOwner">
+              <option value="">未指定</option>
+              <option>张三</option>
+              <option>李四</option>
+              <option>王五</option>
+            </select>
+          </div>
+          <div class="btn-row">
+            <button type="submit" class="btn-primary" id="btnSubmit">添加任务</button>
+            <button type="button" class="btn-ghost" id="btnCancel" hidden>取消编辑</button>
+          </div>
+        </form>
+        <p class="stats" id="statsText">当前无任务，请添加或加载示例。</p>
+        <ul class="task-list" id="taskList" aria-label="任务列表"></ul>
+        <div class="btn-row" style="margin-top:12px">
+          <button type="button" class="btn-danger" id="btnClear" disabled>清空全部</button>
+        </div>
+      </div>
+    </aside>
+    <main class="panel gantt-wrap">
+      <div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+      <div class="toolbar">
+        <label>视图范围</label>
+        <select id="rangeSelect">
+          <option value="14">近 2 周</option>
+          <option value="30" selected>近 1 月</option>
+          <option value="60">近 2 月</option>
+        </select>
+        <label>缩放</label>
+        <select id="zoomSelect">
+          <option value="28">紧凑</option>
+          <option value="36" selected>标准</option>
+          <option value="48">宽松</option>
+        </select>
+        <span class="badge" id="badgeToday"></span>
+      </div>
+      <div class="gantt-scroll" id="ganttScroll">
+        <div class="empty-gantt" id="emptyGantt">
+          <div class="empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <path d="M3 10h18M8 4v4M16 4v4"/>
+            </svg>
+          </div>
+          <h3>暂无排期任务</h3>
+          <p>在左侧填写任务信息并点击「添加任务」，或点「示例」快速体验甘特图交互。</p>
+        </div>
+        <div id="ganttRoot" hidden></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:#3b82f6"></i> 可拖拽调整起止</span>
+        <span><i style="background:var(--primary);opacity:0.6"></i> 竖线 = 今天</span>
+        <span id="legendRange"></span>
+      </div>
+    </main>
+  </div>
+</div>
+<script>
+(function () {
+  const COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#f59e0b", "#10b981", "#ec4899"];
+  const STORAGE_KEY = "gantt-prototype-v2";
+  let tasks = [];
+  let editingId = null;
+  let viewStart = startOfDay(new Date());
+  let viewDays = 30;
+  let cellWidth = 36;
+  let dragState = null;
+
+  const $ = (id) => document.getElementById(id);
+  const toast = $("toast");
+  const taskForm = $("taskForm");
+  const taskName = $("taskName");
+  const taskStart = $("taskStart");
+  const taskEnd = $("taskEnd");
+  const taskOwner = $("taskOwner");
+  const taskList = $("taskList");
+  const ganttRoot = $("ganttRoot");
+  const emptyGantt = $("emptyGantt");
+  const btnSubmit = $("btnSubmit");
+  const btnCancel = $("btnCancel");
+  const btnClear = $("btnClear");
+  const btnDemo = $("btnDemo");
+  const badgeCount = $("badgeCount");
+  const badgeSaving = $("badgeSaving");
+  const badgeOk = $("badgeOk");
+  const badgeToday = $("badgeToday");
+  const statsText = $("statsText");
+  const legendRange = $("legendRange");
+  const loading = $("loading");
+
+  function startOfDay(d) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  }
+  function addDays(d, n) {
+    const x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+  function formatDate(d) {
+    return d.toISOString().slice(0, 10);
+  }
+  function parseDate(s) {
+    const [y, m, day] = s.split("-").map(Number);
+    return new Date(y, m - 1, day);
+  }
+  function daysBetween(a, b) {
+    return Math.round((startOfDay(b) - startOfDay(a)) / 86400000);
+  }
+  function showToast(msg, type) {
+    toast.textContent = msg;
+    toast.className = "toast show " + (type || "");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove("show"), 2800);
+  }
+  function flashSave() {
+    badgeSaving.classList.remove("hidden");
+    badgeOk.classList.add("hidden");
+    setTimeout(() => {
+      badgeSaving.classList.add("hidden");
+      badgeOk.classList.remove("hidden");
+      setTimeout(() => badgeOk.classList.add("hidden"), 2000);
+    }, 400);
+  }
+  function persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      flashSave();
+    } catch (e) {
+      showToast("本地存储失败，刷新后可能丢失数据", "error");
+    }
+  }
+  function loadStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) tasks = JSON.parse(raw);
+    } catch (_) {
+      tasks = [];
+      showToast("缓存数据损坏，已重置", "warn");
+    }
+  }
+  function setFieldError(input, errEl, visible) {
+    input.classList.toggle("invalid", visible);
+    errEl.classList.toggle("visible", visible);
+  }
+  function validateForm() {
+    let ok = true;
+    const name = taskName.value.trim();
+    if (name.length < 2) {
+      setFieldError(taskName, $("errName"), true);
+      ok = false;
+    } else setFieldError(taskName, $("errName"), false);
+    if (!taskStart.value) {
+      setFieldError(taskStart, $("errStart"), true);
+      ok = false;
+    } else setFieldError(taskStart, $("errStart"), false);
+    if (!taskEnd.value) {
+      setFieldError(taskEnd, $("errEnd"), true);
+      ok = false;
+    } else if (taskStart.value && taskEnd.value < taskStart.value) {
+      setFieldError(taskEnd, $("errEnd"), true);
+      ok = false;
+    } else setFieldError(taskEnd, $("errEnd"), false);
+    return ok;
+  }
+  function resetForm() {
+    editingId = null;
+    taskForm.reset();
+    btnSubmit.textContent = "添加任务";
+    btnCancel.hidden = true;
+    ["errName", "errStart", "errEnd"].forEach((id) => {
+      const el = $(id);
+      el.classList.remove("visible");
+      el.previousElementSibling?.classList?.remove("invalid");
+    });
+    taskName.classList.remove("invalid");
+    taskStart.classList.remove("invalid");
+    taskEnd.classList.remove("invalid");
+  }
+  function updateStats() {
+    const n = tasks.length;
+    badgeCount.textContent = n + " 项任务";
+    btnClear.disabled = n === 0;
+    if (n === 0) {
+      statsText.textContent = "当前无任务，请添加或加载示例。";
+      return;
+    }
+    const earliest = tasks.reduce((m, t) => (t.start < m ? t.start : m), tasks[0].start);
+    const latest = tasks.reduce((m, t) => (t.end > m ? t.end : m), tasks[0].end);
+    const span = daysBetween(parseDate(earliest), parseDate(latest)) + 1;
+    statsText.textContent = "共 " + n + " 项 · 跨度 " + span + " 天 · 最近更新 " + new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+  }
+  function renderTaskList() {
+    taskList.innerHTML = "";
+    if (tasks.length === 0) {
+      taskList.innerHTML = '<li class="empty-hint"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>列表为空</li>';
+      return;
+    }
+    tasks.forEach((t, i) => {
+      const li = document.createElement("li");
+      li.dataset.id = t.id;
+      if (t.id === editingId) li.classList.add("active");
+      li.innerHTML = '<span><strong>' + escapeHtml(t.name) + '</strong><br><span class="dates">' + t.start + ' → ' + t.end + (t.owner ? ' · ' + escapeHtml(t.owner) : '') + '</span></span>';
+      li.addEventListener("click", () => editTask(t.id));
+      taskList.appendChild(li);
+    });
+  }
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  function renderGantt() {
+    const hasTasks = tasks.length > 0;
+    emptyGantt.classList.toggle("hidden", hasTasks);
+    ganttRoot.hidden = !hasTasks;
+    if (!hasTasks) return;
+
+    const end = addDays(viewStart, viewDays - 1);
+    legendRange.textContent = formatDate(viewStart) + " ～ " + formatDate(end);
+    const today = startOfDay(new Date());
+    badgeToday.textContent = "今天 " + formatDate(today);
+    badgeToday.className = "badge success";
+
+    const cols = viewDays + 1;
+    ganttRoot.style.setProperty("--days", viewDays);
+    ganttRoot.innerHTML = "";
+    const grid = document.createElement("div");
+    grid.className = "gantt-grid";
+    grid.style.gridTemplateColumns = "140px repeat(" + viewDays + ", " + cellWidth + "px)";
+
+    const headerRow = document.createElement("div");
+    headerRow.className = "gantt-header";
+    const labelHead = document.createElement("div");
+    labelHead.className = "cell";
+    labelHead.textContent = "任务";
+    headerRow.appendChild(labelHead);
+    for (let i = 0; i < viewDays; i++) {
+      const d = addDays(viewStart, i);
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      if (+startOfDay(d) === +today) cell.classList.add("today");
+      cell.textContent = (d.getMonth() + 1) + "/" + d.getDate();
+      headerRow.appendChild(cell);
+    }
+    grid.appendChild(headerRow);
+
+    tasks.forEach((t, idx) => {
+      const row = document.createElement("div");
+      row.className = "gantt-row";
+      const label = document.createElement("div");
+      label.className = "label-cell";
+      label.textContent = t.name;
+      label.title = t.name + (t.owner ? " (" + t.owner + ")" : "");
+      row.appendChild(label);
+
+      const track = document.createElement("div");
+      track.className = "track-cell";
+      track.dataset.taskId = t.id;
+
+      const tStart = parseDate(t.start);
+      const tEnd = parseDate(t.end);
+      const offset = daysBetween(viewStart, tStart);
+      const duration = daysBetween(tStart, tEnd) + 1;
+      const totalW = viewDays * cellWidth;
+
+      if (offset + duration > 0 && offset < viewDays) {
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.style.background = COLORS[idx % COLORS.length];
+        bar.style.animationDelay = idx * 0.06 + "s";
+        const left = Math.max(0, offset) * cellWidth;
+        const rightClip = Math.min(viewDays, offset + duration);
+        const visibleDays = rightClip - Math.max(0, offset);
+        const width = visibleDays * cellWidth - 4;
+        bar.style.left = left + 2 + "px";
+        bar.style.width = Math.max(width, 24) + "px";
+        bar.textContent = duration + "天";
+        bar.title = t.start + " 至 " + t.end + "，拖拽移动";
+        bar.dataset.taskId = t.id;
+        bar.addEventListener("mousedown", onBarDragStart);
+        track.appendChild(bar);
+      }
+
+      const todayOff = daysBetween(viewStart, today);
+      if (todayOff >= 0 && todayOff < viewDays) {
+        const line = document.createElement("div");
+        line.className = "today-line";
+        line.style.left = todayOff * cellWidth + cellWidth / 2 + "px";
+        track.appendChild(line);
+      }
+      row.appendChild(track);
+      grid.appendChild(row);
+    });
+
+    ganttRoot.appendChild(grid);
+    updateStats();
+  }
+  function editTask(id) {
+    const t = tasks.find((x) => x.id === id);
+    if (!t) return;
+    editingId = id;
+    taskName.value = t.name;
+    taskStart.value = t.start;
+    taskEnd.value = t.end;
+    taskOwner.value = t.owner || "";
+    btnSubmit.textContent = "保存修改";
+    btnCancel.hidden = false;
+    renderTaskList();
+    showToast("正在编辑：「" + t.name + "」", "warn");
+  }
+  function deleteTask(id) {
+    const t = tasks.find((x) => x.id === id);
+    tasks = tasks.filter((x) => x.id !== id);
+    if (editingId === id) resetForm();
+    persist();
+    renderTaskList();
+    renderGantt();
+    showToast(t ? "已删除「" + t.name + "」" : "已删除", "success");
+  }
+  taskForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!validateForm()) {
+      showToast("请修正表单中的错误项", "error");
+      return;
+    }
+    const payload = {
+      id: editingId || "t" + Date.now(),
+      name: taskName.value.trim(),
+      start: taskStart.value,
+      end: taskEnd.value,
+      owner: taskOwner.value
+    };
+    if (editingId) {
+      const i = tasks.findIndex((x) => x.id === editingId);
+      if (i >= 0) tasks[i] = payload;
+      showToast("已更新「" + payload.name + "」", "success");
+    } else {
+      tasks.push(payload);
+      showToast("已添加「" + payload.name + "」", "success");
+    }
+    resetForm();
+    persist();
+    renderTaskList();
+    renderGantt();
+  });
+  btnCancel.addEventListener("click", () => {
+    resetForm();
+    renderTaskList();
+    showToast("已取消编辑", "warn");
+  });
+  btnClear.addEventListener("click", () => {
+    if (!confirm("确定清空全部任务？")) return;
+    tasks = [];
+    resetForm();
+    persist();
+    renderTaskList();
+    renderGantt();
+    showToast("已清空所有任务", "warn");
+  });
+  btnDemo.addEventListener("click", () => {
+    loading.classList.add("show");
+    setTimeout(() => {
+      const base = startOfDay(new Date());
+      const d = (n) => formatDate(addDays(base, n));
+      tasks = [
+        { id: "d1", name: "需求调研", start: d(0), end: d(4), owner: "张三" },
+        { id: "d2", name: "方案设计", start: d(3), end: d(10), owner: "李四" },
+        { id: "d3", name: "开发实现", start: d(8), end: d(22), owner: "王五" },
+        { id: "d4", name: "联调测试", start: d(20), end: d(28), owner: "张三" },
+        { id: "d5", name: "上线发布", start: d(27), end: d(30), owner: "李四" }
+      ];
+      viewStart = addDays(base, -2);
+      loading.classList.remove("show");
+      persist();
+      renderTaskList();
+      renderGantt();
+      showToast("已加载 5 条示例任务", "success");
+    }, 600);
+  });
+  $("rangeSelect").addEventListener("change", (e) => {
+    viewDays = +e.target.value;
+    renderGantt();
+    showToast("视图已切换为 " + viewDays + " 天", "success");
+  });
+  $("zoomSelect").addEventListener("change", (e) => {
+    cellWidth = +e.target.value;
+    renderGantt();
+  });
+  taskList.addEventListener("contextmenu", (e) => {
+    const li = e.target.closest("li[data-id]");
+    if (!li) return;
+    e.preventDefault();
+    if (confirm("删除该任务？")) deleteTask(li.dataset.id);
+  });
+  function onBarDragStart(e) {
+    if (e.button !== 0) return;
+    const bar = e.currentTarget;
+    const id = bar.dataset.taskId;
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    e.preventDefault();
+    bar.classList.add("dragging");
+    const track = bar.parentElement;
+    const rect = track.getBoundingClientRect();
+    dragState = {
+      id,
+      startX: e.clientX,
+      origStart: parseDate(task.start),
+      duration: daysBetween(parseDate(task.start), parseDate(task.end)),
+      cellW: cellWidth,
+      trackLeft: rect.left
+    };
+    document.addEventListener("mousemove", onBarDrag);
+    document.addEventListener("mouseup", onBarDragEnd);
+  }
+  function onBarDrag(e) {
+    if (!dragState) return;
+    const deltaPx = e.clientX - dragState.startX;
+    const deltaDays = Math.round(deltaPx / dragState.cellW);
+    if (deltaDays === 0) return;
+    const task = tasks.find((t) => t.id === dragState.id);
+    if (!task) return;
+    const newStart = addDays(dragState.origStart, deltaDays);
+    const newEnd = addDays(newStart, dragState.duration);
+    if (newStart < addDays(viewStart, -30)) return;
+    task.start = formatDate(newStart);
+    task.end = formatDate(newEnd);
+    renderGantt();
+    renderTaskList();
+    $("statsText").textContent = "拖拽中… " + task.start + " → " + task.end;
+  }
+  function onBarDragEnd() {
+    document.removeEventListener("mousemove", onBarDrag);
+    document.removeEventListener("mouseup", onBarDragEnd);
+    const bar = document.querySelector(".bar.dragging");
+    if (bar) bar.classList.remove("dragging");
+    if (dragState) {
+      persist();
+      showToast("排期已更新（拖拽）", "success");
+    }
+    dragState = null;
+    updateStats();
+  }
+  const today = startOfDay(new Date());
+  taskStart.value = formatDate(today);
+  taskEnd.value = formatDate(addDays(today, 5));
+  viewStart = addDays(today, -3);
+  loadStorage();
+  renderTaskList();
+  renderGantt();
+})();
+</script>
+</body>
+</html>
