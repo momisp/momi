@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>项目排期甘特图 · 多项目并排</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>项目排期甘特图</h1>
+      <p>单项目明细 · 多项目并排对比，一眼看清各线进度</p>
+    </div>
+    <div class="view-tabs">
+      <button id="tabSingle" class="active">单项目视图</button>
+      <button id="tabMulti">多项目并排</button>
+    </div>
+  </header>
+
+  <div class="summary">
+    <div class="card"><div class="num" id="statProjects">0</div><div class="lbl">项目数</div></div>
+    <div class="card"><div class="num" id="statTotal">0</div><div class="lbl">总任务</div></div>
+    <div class="card"><div class="num" id="statDoing">0</div><div class="lbl">进行中</div></div>
+    <div class="card"><div class="num" id="statOverdue">0</div><div class="lbl">已逾期</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="field name"><label>项目名称</label><input type="text" id="projName" placeholder="例如：移动端 2.0" maxlength="20"></div>
+    <button class="btn btn-ghost" id="addProjBtn">新建项目</button>
+    <div class="toolbar-divider"></div>
+    <div class="field"><label>所属项目</label><select id="taskProject"></select></div>
+    <div class="field name"><label>任务名称</label><input type="text" id="taskName" placeholder="例如：接口联调" maxlength="30"></div>
+    <div class="field date"><label>开始</label><input type="date" id="startDate"></div>
+    <div class="field date"><label>结束</label><input type="date" id="endDate"></div>
+    <div class="field"><label>状态</label>
+      <select id="taskStatus"><option value="todo">未开始</option><option value="doing" selected>进行中</option><option value="done">已完成</option></select>
+    </div>
+    <button class="btn btn-primary" id="addTaskBtn">添加任务</button>
+    <button class="btn btn-primary" id="openParseBtn">智能解析</button>
+    <button class="btn btn-ghost" id="demoBtn">加载示例</button>
+  </div>
+  <div class="error-msg" id="errorMsg"></div>
+  <div class="status-bar" id="statusBar">就绪 · 点「智能解析」粘贴排期自动生成甘特图，或「加载示例」预览</div>
+
+  <div class="legend">
+    <span><i class="dot" style="background:#94a3b8"></i>未开始</span>
+    <span><i class="dot" style="background:#2563eb"></i>进行中</span>
+    <span><i class="dot" style="background:#059669"></i>已完成</span>
+    <span><i class="dot" style="background:#dc2626"></i>已逾期</span>
+    <span><i class="dot-line"></i>今天</span>
+  </div>
+
+  <div id="viewSingle" class="panel">
+    <div class="panel-scroll"><div id="singleContent"><div class="empty"><div class="empty-icon">📅</div><p>暂无数据</p><small>新建项目并添加任务，或加载示例</small></div></div></div>
+  </div>
+
+  <div id="viewMulti" class="multi-grid hide"></div>
+</div>
+
+<div id="parseModal" class="modal hide">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>智能解析排期</h2>
+      <button class="btn btn-ghost btn-sm" id="closeModal">关闭</button>
+    </div>
+    <p class="modal-hint">粘贴排期文字，或 Ctrl+V 贴入截图自动识别（需联网加载 OCR）</p>
+    <div class="paste-zone" id="pasteZone">
+      <textarea id="parseInput" placeholder="粘贴排期内容，例如：&#10;源之蜂巢 1.2.6 排期&#10;开发：7 天｜06.03 - 06.10&#10;测试：2 天｜06.11 - 06.12&#10;一、OA 功能&#10;1.渠道激活：..."></textarea>
+      <div id="imgPreview" class="img-preview hide"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="parseBtn">解析并生成</button>
+      <button class="btn btn-ghost" id="parseSampleBtn">填入示例</button>
+    </div>
+    <div id="parseLog" class="parse-log"></div>
+  </div>
+</div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
