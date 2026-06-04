@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>墨秘 momi — 辅助写小说</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar" data-region="topbar">
+    <h1 class="brand">墨秘 <span>momi</span></h1>
+    <select id="workSelect" aria-label="切换作品"></select>
+    <button type="button" id="btnNewWork" class="ghost">+ 新建作品</button>
+    <div class="spacer"></div>
+    <span id="saveStatus" class="save-status ok">已保存</span>
+    <button type="button" id="btnSave">保存</button>
+    <button type="button" id="btnExport">导出</button>
+    <button type="button" id="btnSettings" class="ghost" title="设置">⚙</button>
+  </header>
+
+  <div class="mobile-bar" data-region="mobile">
+    <button type="button" id="btnToggleSidebar">章节</button>
+    <button type="button" id="btnToggleAssist">助手</button>
+  </div>
+
+  <div class="layout" id="layout">
+    <aside class="panel sidebar" id="sidebar" data-region="chapters">
+      <div class="panel-head">
+        <h2 class="panel-title">章节</h2>
+        <button type="button" id="btnNewChapter" class="primary">+ 新建</button>
+      </div>
+      <div class="chapter-list" id="chapterList"></div>
+      <div class="progress-wrap">
+        <div id="progressLabel">全书进度 0%</div>
+        <div class="progress-bar"><div id="progressFill" style="width:0%"></div></div>
+      </div>
+    </aside>
+
+    <main class="editor-wrap" id="editorWrap" data-region="editor">
+      <div id="emptyWorks" class="empty-state">
+        <p>还没有作品。创建第一部，开始搭骨架与写章。</p>
+        <button type="button" class="primary" id="btnEmptyNewWork">创建第一部作品</button>
+      </div>
+      <div id="emptyChapters" class="empty-state" style="display:none">
+        <p>本书还没有章节。先写第一章，或在大纲里定好梗概。</p>
+        <button type="button" class="primary" id="btnEmptyNewChapter">创建第一章</button>
+      </div>
+      <div id="editorMain" style="display:none; flex:1; flex-direction:column; min-height:0">
+        <div class="editor-inner">
+          <input class="chapter-title-input" id="chapterTitle" placeholder="章节标题" maxlength="80" aria-label="章节标题" />
+          <p class="chapter-summary-line" id="chapterSummaryLine">本章梗概：（在大纲 Tab 编辑）</p>
+          <div class="editor-body" id="editorBody" contenteditable="true" spellcheck="false" aria-label="正文"></div>
+          <footer class="editor-footer">
+            <span>本章 <strong id="wordCount">0</strong> 字</span>
+            <span>今日 <strong id="wordToday">0</strong> 字</span>
+            <button type="button" id="btnPreview" class="ghost">预览</button>
+            <button type="button" id="btnFocus" class="ghost">专注模式</button>
+            <span class="focus-only">按 Esc 退出专注</span>
+          </footer>
+        </div>
+      </div>
+    </main>
+
+    <aside class="panel assist" id="assist" data-region="assist">
+      <div class="tabs" id="assistTabs"></div>
+      <div id="tabPanes"></div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <div class="modal-backdrop" id="modalUnsaved">
+    <div class="modal">
+      <h2>未保存的修改</h2>
+      <p class="sub">切换章节前请选择如何处理当前内容。</p>
+      <div class="row">
+        <button type="button" id="unsavedCancel">取消</button>
+        <button type="button" id="unsavedDiscard">不保存</button>
+        <button type="button" class="primary" id="unsavedSave">保存并切换</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalNewWork">
+    <div class="modal">
+      <h2>新建作品</h2>
+      <div class="form-pane" style="padding:0;margin:12px 0">
+        <label>书名</label>
+        <input id="newWorkTitle" placeholder="例如：星辰大海" />
+      </div>
+      <div class="row">
+        <button type="button" id="newWorkCancel">取消</button>
+        <button type="button" class="primary" id="newWorkConfirm">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalSettings">
+    <div class="modal" style="max-width:480px">
+      <h2>设置</h2>
+      <p class="sub">API Key 仅存于本机浏览器，不会上传。</p>
+      <div class="form-pane" style="padding:0;margin:12px 0">
+        <label>主题</label>
+        <select id="themeSelect">
+          <option value="crystalClear">清透极简（默认）</option>
+          <option value="lightPaper">浅色 · 纸书</option>
+          <option value="darkInk">深色 · 墨韵</option>
+          <option value="darkForest">深色 · 森绿</option>
+        </select>
+        <label>API Base（OpenAI 兼容，留空则用 Mock）</label>
+        <input id="apiBase" placeholder="https://api.openai.com/v1" />
+        <label>API Key</label>
+        <input type="password" id="apiKey" autocomplete="off" />
+        <label>模型</label>
+        <input id="apiModel" placeholder="gpt-4o-mini" />
+      </div>
+      <div class="row">
+        <button type="button" id="settingsClose">关闭</button>
+        <button type="button" class="primary" id="settingsSave">保存</button>
+      </div>
+    </div>
+  </div>
+  <script src="app.js" defer></script>
+</body>
+</html>
