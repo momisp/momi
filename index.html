@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>墨秘 momi — 辅助写小说</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #161a22;
+      --panel2: #1c212b;
+      --border: #2a3140;
+      --text: #e8eaed;
+      --muted: #8b93a7;
+      --accent: #3dd6c6;
+      --accent-dim: rgba(61, 214, 198, 0.15);
+      --accent2: #f0b429;
+      --danger: #f07178;
+      --ok: #7fd962;
+      --radius: 10px;
+      --font-ui: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      --font-body: "Source Han Serif SC", "Noto Serif SC", Georgia, serif;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    button, input, textarea, select {
+      font: inherit;
+      color: inherit;
+      transition: border-color 0.2s var(--ease), background 0.2s var(--ease), transform 0.15s var(--ease), box-shadow 0.2s var(--ease);
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      border-radius: 8px;
+      padding: 6px 12px;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:active:not(:disabled) { transform: scale(0.97); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.primary {
+      background: linear-gradient(135deg, #2a8f85, var(--accent));
+      border-color: transparent;
+      color: #0a0e0d;
+      font-weight: 600;
+    }
+    button.primary:hover:not(:disabled) { box-shadow: 0 0 16px rgba(61, 214, 198, 0.35); }
+    button.ghost { background: transparent; }
+    button.danger { border-color: var(--danger); color: var(--danger); }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      animation: slideDown 0.4s var(--ease);
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .brand { font-weight: 700; letter-spacing: 0.02em; }
+    .brand span { color: var(--accent); font-size: 0.85em; margin-left: 6px; }
+    .topbar select {
+      min-width: 160px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+    .spacer { flex: 1; }
+    .save-status {
+      font-size: 0.85rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 88px;
+      transition: color 0.3s;
+    }
+    .save-status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .save-status.ok { color: var(--ok); }
+    .save-status.ok::before { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+    .save-status.pending { color: var(--accent2); }
+    .save-status.pending::before { background: var(--accent2); animation: pulse 1s infinite; }
+    .save-status.err { color: var(--danger); }
+    .save-status.err::before { background: var(--danger); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr 320px;
+      flex: 1;
+      min-height: 0;
+    }
+    @media (max-width: 1024px) {
+      .layout { grid-template-columns: 200px 1fr 280px; }
+    }
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar, .assist { display: none; }
+      .sidebar.open, .assist.open {
+        display: flex;
+        position: fixed;
+        inset: 48px 0 0;
+        z-index: 20;
+        animation: slideInSide 0.3s var(--ease);
+      }
+      .mobile-bar { display: flex !important; }
+    }
+    @keyframes slideInSide {
+      from { opacity: 0; transform: translateX(-12px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .mobile-bar {
+      display: none;
+      gap: 8px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .panel {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .panel:last-child { border-right: none; border-left: 1px solid var(--border); }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+    .chapter-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .chapter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      border: 1px solid transparent;
+      animation: fadeIn 0.25s var(--ease);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .chapter-item:hover { background: var(--panel2); }
+    .chapter-item.active {
+      background: var(--accent-dim);
+      border-color: rgba(61, 214, 198, 0.35);
+    }
+    .chapter-item .title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .status-dot.wip { background: var(--accent2); }
+    .status-dot.done { background: var(--ok); }
+
+    .progress-wrap {
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--panel2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-bar > div {
+      height: 100%;
+      background: linear-gradient(90deg, #2a8f85, var(--accent));
+      transition: width 0.5s var(--ease);
+    }
+
+    .editor-wrap {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg);
+    }
+    .editor-wrap.focus-mode .sidebar,
+    .editor-wrap.focus-mode .assist,
+    .editor-wrap.focus-mode ~ .mobile-bar { display: none !important; }
+    body.focus-mode .topbar .brand ~ *:not(.spacer):not(#btnFocusExit) { display: none; }
+    body.focus-mode #btnFocusExit { display: inline-flex !important; }
+
+    .chapter-title-input {
+      margin: 16px 20px 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 8px;
+      width: calc(100% - 40px);
+      transition: border-color 0.2s;
+    }
+    .chapter-title-input:focus { border-bottom-color: var(--accent); outline: none; }
+    .chapter-summary {
+      margin: 8px 20px 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .editor-body {
+      flex: 1;
+      margin: 12px 20px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #12151c;
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      line-height: 1.85;
+      overflow-y: auto;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .editor-body:focus {
+      border-color: rgba(61, 214, 198, 0.4);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    .editor-footer {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 8px 20px 14px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .editor-footer strong { color: var(--text); transition: color 0.2s; }
+    .editor-footer strong.bump { color: var(--accent); animation: bump 0.4s var(--ease); }
+    @keyframes bump {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-pane {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+      animation: tabFade 0.25s var(--ease);
+    }
+    @keyframes tabFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .tab-pane.active { display: flex; }
+
+    .ai-toolbar {
+      padding: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .ai-toolbar button.loading {
+      position: relative;
+      color: transparent;
+      pointer-events: none;
+    }
+    .ai-toolbar button.loading::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ai-output {
+      flex: 1;
+      margin: 0 12px;
+      padding: 12px;
+      min-height: 120px;
+      background: var(--panel2);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      overflow-y: auto;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      transition: border-color 0.3s, color 0.3s;
+    }
+    .ai-output.has-text { color: var(--text); border-style: solid; border-color: rgba(61, 214, 198, 0.25); }
+    .ai-output.streaming::after {
+      content: "▋";
+      animation: blink 0.8s step-end infinite;
+      color: var(--accent);
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .form-pane {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .form-pane label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .form-pane input,
+    .form-pane textarea,
+    .form-pane select {
+      width: 100%;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      resize: vertical;
+    }
+    .form-pane input:focus,
+    .form-pane textarea:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .card-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+    .card {
+      padding: 10px 12px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card.active { border-color: var(--accent); background: var(--accent-dim); }
+    .card h4 { font-size: 0.9rem; margin-bottom: 4px; }
+    .card p { font-size: 0.78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      gap: 14px;
+      padding: 32px;
+      text-align: center;
+      animation: fadeIn 0.5s var(--ease);
+    }
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: var(--panel2);
+      border: 1px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      opacity: 0.85;
+    }
+    .empty-state h3 { color: var(--text); font-size: 1rem; font-weight: 600; }
+    .empty-state p { font-size: 0.85rem; max-width: 260px; line-height: 1.6; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      backdrop-filter: blur(4px);
+    }
+    .modal-backdrop.show {
+      display: flex;
+      animation: backdropIn 0.25s var(--ease);
+    }
+    @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      min-width: 320px;
+      max-width: 90vw;
+      animation: modalIn 0.3s var(--ease);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal h3 { margin-bottom: 8px; }
+    .modal p.sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 16px; }
+
+    .toast-wrap {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      animation: toastIn 0.35s var(--ease), toastOut 0.35s var(--ease) 2.6s forwards;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast.ok { border-color: rgba(127, 217, 98, 0.4); }
+    .toast.err { border-color: rgba(240, 113, 120, 0.4); }
+    .toast.warn { border-color: rgba(240, 180, 41, 0.4); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toastOut {
+      to { opacity: 0; transform: translateY(-8px); }
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--panel2) 25%, #252b38 50%, var(--panel2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 6px;
+      height: 36px;
+      margin: 6px 8px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .char-form-inner { padding: 8px 12px 12px; border-top: 1px solid var(--border); }
+    .idea-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 8px 12px;
+      border-top: 1px solid var(--border);
+    }
+    .idea-input-row input { flex: 1; }
+
+    #btnFocusExit { display: none; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">墨秘 <span>momi</span></div>
+    <select id="workSelect" aria-label="切换作品"></select>
+    <button type="button" id="btnNewWork" class="ghost">+ 新建作品</button>
+    <div class="spacer"></div>
+    <span id="saveStatus" class="save-status ok">已保存</span>
+    <button type="button" id="btnExport">导出全书</button>
+    <button type="button" id="btnSettings" class="ghost" title="设置">⚙</button>
+    <button type="button" id="btnFocusExit" class="ghost">退出专注</button>
+  </header>
+
+  <div class="mobile-bar">
+    <button type="button" id="btnToggleSidebar">📑 章节</button>
+    <button type="button" id="btnToggleAssist">✨ 助手</button>
+  </div>
+
+  <div class="layout" id="layout">
+    <aside class="panel sidebar" id="sidebar">
+      <div class="panel-head">
+        <span>章节</span>
+        <button type="button" id="btnNewChapter" class="primary">+ 新建</button>
+      </div>
+      <div class="chapter-list" id="chapterList"></div>
+      <div class="progress-wrap">
+        <div id="progressLabel">全书进度 0%</div>
+        <div class="progress-bar"><div id="progressFill" style="width:0%"></div></div>
+      </div>
+    </aside>
+
+    <main class="editor-wrap" id="editorWrap">
+      <div id="emptyWorks" class="empty-state">
+        <div class="empty-icon">📖</div>
+        <h3>还没有作品</h3>
+        <p>创建你的第一部小说，开始搭建章节、角色与世界观。</p>
+        <button class="primary" id="btnEmptyNewWork">创建第一部作品</button>
+      </div>
+      <div id="emptyChapters" class="empty-state" style="display:none">
+        <div class="empty-icon">📝</div>
+        <h3>还没有章节</h3>
+        <p>先写第一章吧。左侧可随时查看完成进度。</p>
+        <button class="primary" id="btnEmptyNewChapter">创建第一章</button>
+      </div>
+      <div id="editorMain" style="display:none;flex:1;flex-direction:column;min-height:0">
+        <input class="chapter-title-input" id="chapterTitle" placeholder="章节标题" />
+        <p class="chapter-summary" id="chapterSummaryDisplay">本章梗概：（在右侧「大纲」填写）</p>
+        <div class="editor-body" id="editorBody" contenteditable="true" data-placeholder="在此开始写作…"></div>
+        <footer class="editor-footer">
+          本章 <strong id="wordCount">0</strong> 字 · 今日 <strong id="wordToday">0</strong> 字 ·
+          <button id="btnFocus" class="ghost">专注模式</button>
+        </footer>
+      </div>
+    </main>
+
+    <aside class="panel assist" id="assist">
+      <div class="tabs" role="tablist">
+        <div class="tab active" data-tab="ai" role="tab">AI 助手</div>
+        <div class="tab" data-tab="chars" role="tab">角色</div>
+        <div class="tab" data-tab="world" role="tab">世界观</div>
+        <div class="tab" data-tab="outline" role="tab">大纲</div>
+        <div class="tab" data-tab="ideas" role="tab">灵感</div>
+      </div>
+
+      <div class="tab-pane active" id="pane-ai">
+        <div class="ai-toolbar">
+          <button class="primary" id="btnContinue">续写</button>
+          <button id="btnPolish">润色</button>
+          <button id="btnExpand">扩写</button>
+        </div>
+        <textarea id="aiPrompt" style="margin:0 12px 8px;width:calc(100% - 24px);min-height:72px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px" placeholder="创作指令，例如：加强悬念、第三人称…"></textarea>
+        <div class="ai-output" id="aiOutput">选择续写 / 润色 / 扩写。润色需先在正文选中文字。未配置 API 时使用 Mock 演示。</div>
+        <div style="padding:0 12px 12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btnInsert">插入光标处</button>
+          <button id="btnReplace">替换全文</button>
+          <button id="btnClearAi" class="ghost">清空结果</button>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="pane-chars">
+        <div id="charEmpty" class="empty-state" style="padding:24px;display:none">
+          <div class="empty-icon" style="width:48px;height:48px;font-size:1.2rem">👤</div>
+          <p>还没有角色，添加主角与配角以保持续写一致。</p>
+        </div>
+        <div class="card-list" id="charList"></div>
+        <div class="char-form-inner form-pane" id="charForm">
+          <label>姓名</label><input id="charName" placeholder="角色名" />
+          <label>身份 / 标签</label><input id="charRole" placeholder="主角、反派…" />
+          <label>性格与外貌</label><textarea id="charDesc" rows="3" placeholder="写作时注入 AI 上下文"></textarea>
+          <div style="display:flex;gap:8px">
+            <button id="btnSaveChar" class="primary">保存角色</button>
+            <button id="btnDeleteChar" class="danger ghost">删除</button>
+          </div>
+        </div>
+        <button id="btnAddChar" style="margin:8px 12px">+ 添加角色</button>
+      </div>
+
+      <div class="tab-pane" id="pane-world">
+        <div class="form-pane">
+          <label>时代</label><textarea id="worldEra" rows="2" placeholder="例如：星际历 3027"></textarea>
+          <label>地理</label><textarea id="worldGeo" rows="2"></textarea>
+          <label>势力</label><textarea id="worldFactions" rows="2"></textarea>
+          <label>规则 / 设定</label><textarea id="worldRules" rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="pane-outline">
+        <div class="form-pane">
+          <label>全书摘要</label><textarea id="outlineBook" rows="4" placeholder="一句话概括全书"></textarea>
+          <label>本章梗概</label><textarea id="outlineChapter" rows="3" placeholder="同步显示在中栏标题下方"></textarea>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="pane-ideas">
+        <div id="ideaEmpty" class="empty-state" style="padding:24px">
+          <div class="empty-icon" style="width:48px;height:48px;font-size:1.2rem">💡</div>
+          <p>随手记下灵感，写作时可复制到正文或 AI 指令。</p>
+        </div>
+        <div class="card-list" id="ideaList"></div>
+        <div class="idea-input-row">
+          <input id="ideaInput" placeholder="新灵感…" />
+          <button id="btnAddIdea" class="primary">记录</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div class="modal-backdrop" id="modalUnsaved">
+    <div class="modal">
+      <h3>未保存的修改</h3>
+      <p class="sub">切换章节前请选择如何处理当前内容。</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="unsavedCancel">取消</button>
+        <button id="unsavedDiscard">不保存</button>
+        <button class="primary" id="unsavedSave">保存并切换</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalNewWork">
+    <div class="modal">
+      <h3>新建作品</h3>
+      <div class="form-pane" style="padding:12px 0">
+        <label>书名</label>
+        <input id="newWorkTitle" placeholder="例如：星辰大海" />
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="newWorkCancel">取消</button>
+        <button class="primary" id="newWorkConfirm">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalSettings">
+    <div class="modal" style="min-width:360px">
+      <h3>设置</h3>
+      <p class="sub">API Key 仅保存在本机浏览器，不会上传。</p>
+      <div class="form-pane" style="padding:12px 0">
+        <label>API Base（OpenAI 兼容）</label>
+        <input id="apiBase" placeholder="https://api.openai.com/v1" />
+        <label>API Key</label>
+        <input type="password" id="apiKey" placeholder="sk-…" />
+        <label>模型（可选）</label>
+        <input id="apiModel" placeholder="gpt-4o-mini" />
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="settingsClose">关闭</button>
+        <button class="primary" id="settingsSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const STORAGE_KEY = "momi_v1";
+  const SETTINGS_KEY = "momi_settings";
+  const TODAY_KEY = "momi_today";
+
+  const defaultWork = () => ({
+    id: uid(),
+    title: "星辰大海",
+    chapters: [
+      { id: uid(), title: "第一章 启程", status: "wip", body: "林晚站在观测台上，望着远处缓缓旋转的星云。舰队的信号灯在黑暗中一闪一闪，像某种古老的密码。\n\n「准备好了吗？」身旁的 AI 助手轻声问。\n\n她没有立刻回答。三年前的那场事故，仍像一根刺，扎在记忆最深处。", outline: "主角登舰，埋下往事伏笔。" },
+      { id: uid(), title: "第二章 暗涌", status: "todo", body: "", outline: "舰队内部出现分歧。" }
+    ],
+    characters: [
+      { id: uid(), name: "林晚", role: "主角", desc: "冷静、执拗；左眉有旧伤。" },
+      { id: uid(), name: "「回声」", role: "AI 助手", desc: "温和但偶尔语带机锋。" }
+    ],
+    world: { era: "星际历 3027", geo: "人类联邦边陲星域", factions: "联邦舰队 / 独立殖民者", rules: "超光速航行需消耗稀有晶体" },
+    outlineBook: "少女舰长带领小型舰队穿越未知星域，寻找失踪的导师。",
+    ideas: [{ id: uid(), text: "星云深处传来一段人类听不懂的童谣" }]
+  });
+
+  let state = loadState();
+  let settings = loadSettings();
+  let currentWorkId = state.works[0]?.id || null;
+  let currentChapterId = state.works[0]?.chapters[0]?.id || null;
+  let dirty = false;
+  let saveTimer = null;
+  let pendingChapterId = null;
+  let selectedCharId = null;
+  let aiResult = "";
+
+  const $ = (id) => document.getElementById(id);
+
+  function uid() { return "id_" + Math.random().toString(36).slice(2, 10); }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { console.warn(e); }
+    return { works: [defaultWork()] };
+  }
+
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { apiBase: "", apiKey: "", apiModel: "gpt-4o-mini" };
+  }
+
+  function persistState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      setSaveStatus("ok", "已保存");
+      dirty = false;
+      return true;
+    } catch (e) {
+      setSaveStatus("err", "保存失败");
+      toast("本地存储失败，请导出备份", "err");
+      return false;
+    }
+  }
+
+  function getWork() { return state.works.find((w) => w.id === currentWorkId); }
+  function getChapter(work) { return work?.chapters.find((c) => c.id === currentChapterId); }
+
+  function setSaveStatus(kind, text) {
+    const el = $("saveStatus");
+    el.className = "save-status " + kind;
+    el.textContent = text;
+  }
+
+  function toast(msg, type) {
+    type = type || "ok";
+    const wrap = $("toastWrap");
+    const t = document.createElement("div");
+    t.className = "toast " + type;
+    const icon = type === "err" ? "✕" : type === "warn" ? "!" : "✓";
+    t.innerHTML = "<span>" + icon + "</span><span>" + msg + "</span>";
+    wrap.appendChild(t);
+    setTimeout(() => t.remove(), 3200);
+  }
+
+  function markDirty() {
+    if (!dirty) {
+      dirty = true;
+      setSaveStatus("pending", "保存中…");
+    }
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      flushEditorToModel();
+      persistState();
+      updateProgress();
+    }, 800);
+  }
+
+  function flushEditorToModel() {
+    const work = getWork();
+    const ch = getChapter(work);
+    if (!ch) return;
+    ch.title = $("chapterTitle").value.trim() || "未命名章节";
+    ch.body = $("editorBody").innerText;
+    ch.outline = $("outlineChapter").value;
+    work.outlineBook = $("outlineBook").value;
+    work.world = {
+      era: $("worldEra").value,
+      geo: $("worldGeo").value,
+      factions: $("worldFactions").value,
+      rules: $("worldRules").value
+    };
+    syncChapterSummary();
+  }
+
+  function syncChapterSummary() {
+    const ch = getChapter(getWork());
+    const text = ch?.outline?.trim();
+    $("chapterSummaryDisplay").textContent = text
+      ? "本章梗概：" + text
+      : "本章梗概：（在右侧「大纲」填写）";
+  }
+
+  function countWords(text) {
+    return (text || "").replace(/\s/g, "").length;
+  }
+
+  function getTodayWords() {
+    const d = new Date().toDateString();
+    let data = {};
+    try { data = JSON.parse(localStorage.getItem(TODAY_KEY) || "{}"); } catch (e) {}
+    if (data.date !== d) return { date: d, count: 0, base: 0 };
+    return data;
+  }
+
+  function updateWordCounts(bump) {
+    const ch = getChapter(getWork());
+    const n = countWords(ch?.body || "");
+    const wc = $("wordCount");
+    wc.textContent = n;
+    if (bump) {
+      wc.classList.add("bump");
+      setTimeout(() => wc.classList.remove("bump"), 400);
+    }
+    const today = getTodayWords();
+    const d = new Date().toDateString();
+    if (today.date !== d) {
+      today.date = d;
+      today.count = 0;
+      today.base = n;
+    }
+    const delta = Math.max(0, n - (today.base || 0));
+    $("wordToday").textContent = today.count + delta;
+  }
+
+  function updateProgress() {
+    const work = getWork();
+    if (!work || !work.chapters.length) {
+      $("progressFill").style.width = "0%";
+      $("progressLabel").textContent = "全书进度 0%";
+      return;
+    }
+    const done = work.chapters.filter((c) => c.status === "done").length;
+    const pct = Math.round((done / work.chapters.length) * 100);
+    $("progressFill").style.width = pct + "%";
+    $("progressLabel").textContent = "全书进度 " + pct + "%（" + done + "/" + work.chapters.length + " 章已完成）";
+  }
+
+  function renderWorkSelect() {
+    const sel = $("workSelect");
+    sel.innerHTML = "";
+    state.works.forEach((w) => {
+      const o = document.createElement("option");
+      o.value = w.id;
+      o.textContent = w.title;
+      if (w.id === currentWorkId) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.disabled = state.works.length === 0;
+  }
+
+  function renderChapterList() {
+    const list = $("chapterList");
+    const work = getWork();
+    list.innerHTML = "";
+    if (!work) return;
+    work.chapters.forEach((ch) => {
+      const div = document.createElement("div");
+      div.className = "chapter-item" + (ch.id === currentChapterId ? " active" : "");
+      div.dataset.id = ch.id;
+      const dot = document.createElement("span");
+      dot.className = "status-dot " + (ch.status === "done" ? "done" : ch.status === "wip" ? "wip" : "");
+      const title = document.createElement("span");
+      title.className = "title";
+      title.textContent = ch.title;
+      div.appendChild(dot);
+      div.appendChild(title);
+      div.addEventListener("click", () => switchChapter(ch.id));
+      list.appendChild(div);
+    });
+  }
+
+  function renderChars() {
+    const work = getWork();
+    const list = $("charList");
+    list.innerHTML = "";
+    const empty = $("charEmpty");
+    if (!work?.characters?.length) {
+      empty.style.display = "flex";
+      return;
+    }
+    empty.style.display = "none";
+    work.characters.forEach((c) => {
+      const card = document.createElement("div");
+      card.className = "card" + (c.id === selectedCharId ? " active" : "");
+      card.innerHTML = "<h4>" + esc(c.name) + "</h4><p>" + esc(c.role) + " · " + esc(c.desc).slice(0, 40) + "</p>";
+      card.addEventListener("click", () => selectChar(c.id));
+      list.appendChild(card);
+    });
+  }
+
+  function selectChar(id) {
+    selectedCharId = id;
+    const c = getWork()?.characters.find((x) => x.id === id);
+    if (!c) return;
+    $("charName").value = c.name;
+    $("charRole").value = c.role;
+    $("charDesc").value = c.desc;
+    renderChars();
+  }
+
+  function renderIdeas() {
+    const work = getWork();
+    const list = $("ideaList");
+    list.innerHTML = "";
+    const ideas = work?.ideas || [];
+    $("ideaEmpty").style.display = ideas.length ? "none" : "flex";
+    ideas.forEach((idea) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = "<p style='white-space:normal'>" + esc(idea.text) + "</p>";
+      card.addEventListener("dblclick", () => {
+        $("aiPrompt").value = idea.text;
+        document.querySelector('.tab[data-tab="ai"]').click();
+        toast("已填入 AI 指令");
+      });
+      list.appendChild(card);
+    });
+  }
+
+  function esc(s) {
+    const d = document.createElement("div");
+    d.textContent = s || "";
+    return d.innerHTML;
+  }
+
+  function showView() {
+    const hasWorks = state.works.length > 0;
+    const work = getWork();
+    const hasChapters = work && work.chapters.length > 0;
+
+    $("emptyWorks").style.display = hasWorks ? "none" : "flex";
+    $("emptyChapters").style.display = hasWorks && !hasChapters ? "flex" : "none";
+    $("editorMain").style.display = hasWorks && hasChapters ? "flex" : "none";
+
+    renderWorkSelect();
+    renderChapterList();
+    updateProgress();
+    if (hasWorks && hasChapters) loadEditorFromModel();
+    renderChars();
+    renderIdeas();
+    loadWorldOutline();
+  }
+
+  function loadWorldOutline() {
+    const work = getWork();
+    if (!work) return;
+    $("worldEra").value = work.world?.era || "";
+    $("worldGeo").value = work.world?.geo || "";
+    $("worldFactions").value = work.world?.factions || "";
+    $("worldRules").value = work.world?.rules || "";
+    $("outlineBook").value = work.outlineBook || "";
+    const ch = getChapter(work);
+    $("outlineChapter").value = ch?.outline || "";
+    syncChapterSummary();
+  }
+
+  function loadEditorFromModel() {
+    const ch = getChapter(getWork());
+    if (!ch) return;
+    $("chapterTitle").value = ch.title;
+    $("editorBody").innerText = ch.body || "";
+    $("outlineChapter").value = ch.outline || "";
+    syncChapterSummary();
+    updateWordCounts(false);
+    dirty = false;
+    setSaveStatus("ok", "已保存");
+  }
+
+  function switchChapter(id) {
+    if (id === currentChapterId) return;
+    if (dirty) {
+      pendingChapterId = id;
+      $("modalUnsaved").classList.add("show");
+      return;
+    }
+    currentChapterId = id;
+    loadEditorFromModel();
+    renderChapterList();
+    toast("已切换章节");
+  }
+
+  function switchWork(id) {
+    flushEditorToModel();
+    persistState();
+    currentWorkId = id;
+    const work = getWork();
+    currentChapterId = work?.chapters[0]?.id || null;
+    showView();
+    toast("已切换作品");
+  }
+
+  function mockAi(type, selection, prompt) {
+    const work = getWork();
+    const ch = getChapter(work);
+    const names = (work?.characters || []).map((c) => c.name).join("、") || "角色";
+    const tail = (ch?.body || "").slice(-80);
+    const templates = {
+      continue: "（续写 Mock）\n\n" + tail + "……风声忽然停了。远处传来金属廊道被脚步敲醒的回响。\n\n「" + names.split("、")[0] + "，」有人低声唤她，「协议已经解冻。」",
+      polish: "（润色 Mock）\n\n" + (selection || "【请先选中正文】"),
+      expand: "（扩写 Mock）\n\n" + (selection || tail) + "\n\n细节像潮水涌来：灯光在舱壁上拉出长长的影子，仪表面板上的字符一格一格亮起，仿佛某种即将苏醒的语言。"
+    };
+    let out = templates[type] || "";
+    if (prompt) out += "\n\n— 指令：" + prompt;
+    if (work?.world?.era) out += "\n〔世界观·" + work.world.era + "〕";
+    return out;
+  }
+
+  async function runAi(type) {
+    const sel = window.getSelection();
+    const selection = sel && sel.toString().trim();
+    if (type === "polish" && !selection) {
+      toast("润色请先在正文选中一段文字", "warn");
+      return;
+    }
+    const prompt = $("aiPrompt").value.trim();
+    const btns = { continue: $("btnContinue"), polish: $("btnPolish"), expand: $("btnExpand") };
+    Object.values(btns).forEach((b) => b.classList.add("loading"));
+    const outEl = $("aiOutput");
+    outEl.classList.add("streaming");
+    outEl.classList.remove("has-text");
+    outEl.textContent = "生成中…";
+
+    const useApi = settings.apiBase && settings.apiKey;
+    try {
+      if (useApi) {
+        aiResult = await callOpenAI(type, selection, prompt);
+      } else {
+        await delay(600);
+        aiResult = mockAi(type, selection, prompt);
+        if (!settings.apiKey) toast("未配置 API，使用 Mock 演示", "warn");
+      }
+      typewriter(outEl, aiResult, () => {
+        outEl.classList.remove("streaming");
+        outEl.classList.add("has-text");
+      });
+    } catch (e) {
+      outEl.classList.remove("streaming");
+      outEl.textContent = "生成失败：" + (e.message || "未知错误");
+      toast("AI 请求失败", "err");
+    } finally {
+      Object.values(btns).forEach((b) => b.classList.remove("loading"));
+    }
+  }
+
+  async function callOpenAI(type, selection, prompt) {
+    const work = getWork();
+    const ch = getChapter(work);
+    const sys = "你是小说写作助手。根据角色与世界观保持人设一致。角色：" + JSON.stringify(work?.characters || []) + "；世界观：" + JSON.stringify(work?.world || {});
+    const userMap = {
+      continue: "请续写以下章节正文（约 200 字）：\n" + (ch?.body || "").slice(-500),
+      polish: "请润色以下选中文字：\n" + selection,
+      expand: "请扩写以下内容：\n" + (selection || (ch?.body || "").slice(-200))
+    };
+    const res = await fetch(settings.apiBase.replace(/\/$/, "") + "/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + settings.apiKey
+      },
+      body: JSON.stringify({
+        model: settings.apiModel || "gpt-4o-mini",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: (prompt ? prompt + "\n\n" : "") + userMap[type] }
+        ],
+        max_tokens: 600
+      })
+    });
+    if (!res.ok) throw new Error(res.status + " " + (await res.text()).slice(0, 80));
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || "(空响应)";
+  }
+
+  function typewriter(el, text, done) {
+    el.textContent = "";
+    let i = 0;
+    const tick = () => {
+      if (i < text.length) {
+        el.textContent += text[i++];
+        setTimeout(tick, 12);
+      } else {
+        aiResult = text;
+        done();
+      }
+    };
+    tick();
+  }
+
+  function delay(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+  function exportBook() {
+    const work = getWork();
+    if (!work) {
+      toast("没有可导出的作品", "warn");
+      return;
+    }
+    flushEditorToModel();
+    try {
+      let txt = "《" + work.title + "》\n\n";
+      txt += "【全书摘要】\n" + (work.outlineBook || "") + "\n\n";
+      work.chapters.forEach((ch, i) => {
+        txt += "\n\n第 " + (i + 1) + " 章 " + ch.title + "\n";
+        txt += (ch.outline ? "〔梗概〕" + ch.outline + "\n" : "") + "\n";
+        txt += ch.body || "（空）";
+      });
+      const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = work.title + ".txt";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast("导出成功");
+    } catch (e) {
+      toast("导出失败", "err");
+    }
+  }
+
+  function newChapter() {
+    const work = getWork();
+    if (!work) return;
+    const n = work.chapters.length + 1;
+    const ch = { id: uid(), title: "第" + n + "章", status: "todo", body: "", outline: "" };
+    work.chapters.push(ch);
+    currentChapterId = ch.id;
+    persistState();
+    showView();
+    toast("已新建章节");
+  }
+
+  function newWork(title) {
+    const w = {
+      id: uid(),
+      title: title || "未命名作品",
+      chapters: [],
+      characters: [],
+      world: { era: "", geo: "", factions: "", rules: "" },
+      outlineBook: "",
+      ideas: []
+    };
+    state.works.push(w);
+    currentWorkId = w.id;
+    currentChapterId = null;
+    persistState();
+    showView();
+    toast("作品已创建");
+  }
+
+  /* events */
+  $("workSelect").addEventListener("change", (e) => switchWork(e.target.value));
+  $("btnNewWork").addEventListener("click", () => $("modalNewWork").classList.add("show"));
+  $("btnEmptyNewWork").addEventListener("click", () => $("modalNewWork").classList.add("show"));
+  $("newWorkCancel").addEventListener("click", () => $("modalNewWork").classList.remove("show"));
+  $("newWorkConfirm").addEventListener("click", () => {
+    const t = $("newWorkTitle").value.trim();
+    if (!t) { toast("请输入书名", "warn"); return; }
+    newWork(t);
+    $("newWorkTitle").value = "";
+    $("modalNewWork").classList.remove("show");
+  });
+  $("btnNewChapter").addEventListener("click", newChapter);
+  $("btnEmptyNewChapter").addEventListener("click", newChapter);
+
+  ["chapterTitle", "editorBody", "outlineChapter", "outlineBook", "worldEra", "worldGeo", "worldFactions", "worldRules"].forEach((id) => {
+    const el = $(id);
+    el.addEventListener("input", () => {
+      markDirty();
+      if (id === "editorBody") updateWordCounts(true);
+      if (id === "outlineChapter") syncChapterSummary();
+    });
+  });
+
+  $("editorBody").addEventListener("blur", () => {
+    const work = getWork();
+    const ch = getChapter(work);
+    if (ch && countWords(ch.body) > 8000) toast("本章已超过 8000 字，注意性能", "warn");
+  });
+
+  $("unsavedCancel").addEventListener("click", () => {
+    $("modalUnsaved").classList.remove("show");
+    pendingChapterId = null;
+  });
+  $("unsavedDiscard").addEventListener("click", () => {
+    dirty = false;
+    $("modalUnsaved").classList.remove("show");
+    currentChapterId = pendingChapterId;
+    pendingChapterId = null;
+    loadEditorFromModel();
+    renderChapterList();
+  });
+  $("unsavedSave").addEventListener("click", () => {
+    flushEditorToModel();
+    if (persistState()) {
+      dirty = false;
+      $("modalUnsaved").classList.remove("show");
+      currentChapterId = pendingChapterId;
+      pendingChapterId = null;
+      loadEditorFromModel();
+      renderChapterList();
+    }
+  });
+
+  $("btnContinue").addEventListener("click", () => runAi("continue"));
+  $("btnPolish").addEventListener("click", () => runAi("polish"));
+  $("btnExpand").addEventListener("click", () => runAi("expand"));
+  $("btnInsert").addEventListener("click", () => {
+    if (!aiResult) { toast("暂无 AI 结果", "warn"); return; }
+    $("editorBody").focus();
+    document.execCommand("insertText", false, "\n\n" + aiResult);
+    markDirty();
+    updateWordCounts(true);
+    toast("已插入");
+  });
+  $("btnReplace").addEventListener("click", () => {
+    if (!aiResult) { toast("暂无 AI 结果", "warn"); return; }
+    if (!confirm("确定用 AI 结果替换整章正文？")) return;
+    $("editorBody").innerText = aiResult;
+    markDirty();
+    updateWordCounts(true);
+    toast("已替换全文");
+  });
+  $("btnClearAi").addEventListener("click", () => {
+    aiResult = "";
+    const o = $("aiOutput");
+    o.textContent = "选择续写 / 润色 / 扩写。润色需先在正文选中文字。";
+    o.classList.remove("has-text", "streaming");
+  });
+
+  $("btnAddChar").addEventListener("click", () => {
+    const work = getWork();
+    if (!work) return;
+    const c = { id: uid(), name: "新角色", role: "", desc: "" };
+    work.characters = work.characters || [];
+    work.characters.push(c);
+    selectChar(c.id);
+    persistState();
+    renderChars();
+    toast("已添加角色");
+  });
+  $("btnSaveChar").addEventListener("click", () => {
+    const work = getWork();
+    if (!selectedCharId || !work) return;
+    const c = work.characters.find((x) => x.id === selectedCharId);
+    if (!c) return;
+    c.name = $("charName").value.trim() || "未命名";
+    c.role = $("charRole").value;
+    c.desc = $("charDesc").value;
+    persistState();
+    renderChars();
+    toast("角色已保存");
+  });
+  $("btnDeleteChar").addEventListener("click", () => {
+    const work = getWork();
+    if (!selectedCharId || !work) return;
+    work.characters = work.characters.filter((x) => x.id !== selectedCharId);
+    selectedCharId = work.characters[0]?.id || null;
+    if (selectedCharId) selectChar(selectedCharId);
+    else { $("charName").value = ""; $("charRole").value = ""; $("charDesc").value = ""; }
+    persistState();
+    renderChars();
+    toast("已删除角色");
+  });
+
+  $("btnAddIdea").addEventListener("click", () => {
+    const text = $("ideaInput").value.trim();
+    if (!text) { toast("请输入灵感内容", "warn"); return; }
+    const work = getWork();
+    work.ideas = work.ideas || [];
+    work.ideas.unshift({ id: uid(), text });
+    $("ideaInput").value = "";
+    persistState();
+    renderIdeas();
+    toast("灵感已记录");
+  });
+  $("ideaInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") $("btnAddIdea").click();
+  });
+
+  $("btnExport").addEventListener("click", exportBook);
+  $("btnSettings").addEventListener("click", () => {
+    $("apiBase").value = settings.apiBase || "";
+    $("apiKey").value = settings.apiKey || "";
+    $("apiModel").value = settings.apiModel || "";
+    $("modalSettings").classList.add("show");
+  });
+  $("settingsClose").addEventListener("click", () => $("modalSettings").classList.remove("show"));
+  $("settingsSave").addEventListener("click", () => {
+    settings = {
+      apiBase: $("apiBase").value.trim(),
+      apiKey: $("apiKey").value.trim(),
+      apiModel: $("apiModel").value.trim() || "gpt-4o-mini"
+    };
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      $("modalSettings").classList.remove("show");
+      toast(settings.apiKey ? "API 已保存" : "已保存（未填 Key 将使用 Mock）");
+    } catch (e) {
+      toast("设置保存失败", "err");
+    }
+  });
+
+  $("btnFocus").addEventListener("click", () => {
+    document.body.classList.add("focus-mode");
+    toast("专注模式：按 Esc 或点顶栏退出");
+  });
+  $("btnFocusExit").addEventListener("click", () => document.body.classList.remove("focus-mode"));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") document.body.classList.remove("focus-mode");
+  });
+
+  $("btnToggleSidebar").addEventListener("click", () => {
+    $("sidebar").classList.toggle("open");
+    $("assist").classList.remove("open");
+  });
+  $("btnToggleAssist").addEventListener("click", () => {
+    $("assist").classList.toggle("open");
+    $("sidebar").classList.remove("open");
+  });
+
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach((p) => p.classList.remove("active"));
+      tab.classList.add("active");
+      $("pane-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+
+  document.querySelectorAll(".modal-backdrop").forEach((bd) => {
+    bd.addEventListener("click", (e) => {
+      if (e.target === bd) bd.classList.remove("show");
+    });
+  });
+
+  /* chapter status: double-click dot cycle */
+  $("chapterList").addEventListener("dblclick", (e) => {
+    const item = e.target.closest(".chapter-item");
+    if (!item) return;
+    const work = getWork();
+    const ch = work?.chapters.find((c) => c.id === item.dataset.id);
+    if (!ch) return;
+    const order = ["todo", "wip", "done"];
+    ch.status = order[(order.indexOf(ch.status) + 1) % 3] || "wip";
+    persistState();
+    renderChapterList();
+    toast("章节状态已更新");
+  });
+
+  /* init */
+  if (!currentWorkId && state.works[0]) currentWorkId = state.works[0].id;
+  if (!currentChapterId && getWork()?.chapters[0]) currentChapterId = getWork().chapters[0].id;
+  if (getWork()?.characters[0]) selectedCharId = getWork().characters[0].id;
+  showView();
+  if (getWork()?.characters[0]) selectChar(getWork().characters[0].id);
+})();
+  </script>
+</body>
+</html>
