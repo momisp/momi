@@ -1,0 +1,30 @@
+{
+  "round": 2,
+  "style_lock": "top-down 90deg, single character centered, pure white background #FFFFFF, no text, no watermark, no UI, game sprite sheet one unit, 2px dark outline #1a1a2e, xianxia cultivation fantasy, cel shading, high contrast for dark game background",
+  "output": {
+    "size_px": 512,
+    "target_display_px": 56,
+    "safe_margin_px": 48,
+    "format": "png",
+    "matte": "white_to_alpha",
+    "dest_dir": "modes/circle_survivor/assets/ai"
+  },
+  "regenerate_slots": ["player", "enemy_red", "enemy_blue", "enemy_yellow"],
+  "color_targets_on_bg_0a0e14": {
+    "player_robe": "#5eb8e8",
+    "enemy_red": "#cc4444",
+    "enemy_blue": "#8b7cf0",
+    "enemy_yellow": "#b8c832"
+  },
+  "prompts": {
+    "player": "slot=player: top-down view young male cultivator, azure daoist robe #5eb8e8 with gold trim, black topknot jade pin, slim vertical silhouette, feet at bottom center, NO outer glow NO aura circle NO sword trail, faint sword guard at hip only, readable head-shoulders-torso at 40px, xianxia hero, pure white background",
+    "enemy_red": "slot=enemy_red: top-down wolf yaoguai demon, rust red #cc4444 fur, triangular snout forward, ears up, compact predator 70 percent frame height, crimson eyes, 2px dark outline, readable at 32px on black background, xianxia beast, pure white background",
+    "enemy_blue": "slot=enemy_blue: top-down shadow fiend yaoguai, purple-blue body #6b5b95, horned shoulders, violet eye glow small, bulky humanoid blob, 2px outline, silhouette readable at 32px, xianxia dark spirit, pure white background, no smoke filling entire canvas",
+    "enemy_yellow": "slot=enemy_yellow: top-down turbid qi slime goblin, yellow-green jelly #b8c832, round body 75 percent frame, two tiny horns, simple cute-evil face, highest brightness enemy for dark arena, 32px thumbnail clear circle, xianxia low tier yaoguai, pure white background"
+  },
+  "post_process": [
+    "trim white fringe under 8 percent saturation",
+    "verify alpha no gray halo",
+    "export exact filenames: player.png enemy_red.png enemy_blue.png enemy_yellow.png"
+  ]
+}
