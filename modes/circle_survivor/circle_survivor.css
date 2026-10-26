@@ -1,0 +1,218 @@
+.cs-host {
+  min-height: 100vh;
+  background: #070b10;
+  color: #e2e8f0;
+}
+
+.cs-host-nav {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.cs-host-nav a {
+  color: #7dd3fc;
+  text-decoration: none;
+}
+
+.cs-root {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 48px);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.cs-hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), transparent);
+}
+
+.cs-hud-block {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 180px;
+}
+
+.cs-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.cs-bar {
+  flex: 1;
+  height: 8px;
+  background: #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 80px;
+}
+
+.cs-bar-fill.hp {
+  height: 100%;
+  background: linear-gradient(90deg, #dc2626, #f87171);
+  transition: width 0.15s ease;
+}
+
+.cs-bar-fill.xp {
+  height: 100%;
+  background: linear-gradient(90deg, #0369a1, #38bdf8);
+  transition: width 0.15s ease;
+}
+
+.cs-val {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-hud-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+  font-size: 0.85rem;
+}
+
+.cs-canvas-wrap {
+  flex: 1;
+  position: relative;
+  min-height: 320px;
+}
+
+.cs-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.cs-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.7);
+  pointer-events: none;
+}
+
+.cs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 6, 12, 0.72);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+
+.cs-panel {
+  background: linear-gradient(145deg, #0f172a, #1e293b);
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  max-width: min(92vw, 520px);
+}
+
+.cs-panel h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+  color: #f0f9ff;
+}
+
+.cs-sub {
+  margin: 0 0 1rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.cs-upgrade-panel {
+  max-width: min(96vw, 640px);
+}
+
+.cs-upgrade-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 520px) {
+  .cs-upgrade-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.cs-upgrade-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 1rem;
+  text-align: left;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.cs-upgrade-card:hover {
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+}
+
+.cs-upgrade-card strong {
+  color: #7dd3fc;
+  font-size: 1rem;
+}
+
+.cs-upgrade-card span {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.35;
+}
+
+.cs-settle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.cs-btn {
+  padding: 0.55rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+}
+
+.cs-btn.primary {
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  color: #fff;
+}
+
+.cs-btn.secondary {
+  background: transparent;
+  border: 1px solid #64748b;
+  color: #e2e8f0;
+}
+
+.cs-btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}

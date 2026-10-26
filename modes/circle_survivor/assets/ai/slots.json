@@ -1,0 +1,7 @@
+{
+  "player": "player.png",
+  "enemy_green": "enemy_green.png",
+  "enemy_red": "enemy_red.png",
+  "enemy_blue": "enemy_blue.png",
+  "enemy_boss": "enemy_boss.png"
+}
