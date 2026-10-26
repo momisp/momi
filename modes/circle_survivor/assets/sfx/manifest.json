@@ -1,6 +1,88 @@
 {
-  "hit": "hit.ogg",
-  "level_up": "level_up.ogg",
-  "thunder": "thunder.ogg",
-  "bgm": "bgm_loop.ogg"
+  "version": 1,
+  "volumes": {
+    "bgm": 0.35,
+    "sfx": 0.5
+  },
+  "cooldown_ms": {
+    "hit": 55,
+    "kill": 90,
+    "thunder": 220,
+    "pickup": 40
+  },
+  "events": {
+    "hit": "hit.ogg",
+    "kill": "kill.ogg",
+    "thunder": "thunder.ogg",
+    "level_up": "level_up.ogg",
+    "hurt": "hurt.ogg",
+    "ui_click": "ui_click.ogg",
+    "game_over": "game_over.ogg",
+    "victory": "victory.ogg",
+    "pickup": "pickup.ogg",
+    "bgm": "bgm_loop.ogg"
+  },
+  "kenney_cc0": [
+    {
+      "dest": "hit.ogg",
+      "note": "御剑/符箓命中",
+      "kenney_pack": "Impact Sounds",
+      "kenney_file": "impactMetal_light_000.ogg"
+    },
+    {
+      "dest": "kill.ogg",
+      "note": "斩妖",
+      "kenney_pack": "Impact Sounds",
+      "kenney_file": "impactGeneric_light_003.ogg"
+    },
+    {
+      "dest": "thunder.ogg",
+      "note": "雷掌",
+      "kenney_pack": "Impact Sounds",
+      "kenney_file": "impactPlate_heavy_001.ogg"
+    },
+    {
+      "dest": "level_up.ogg",
+      "note": "破境",
+      "kenney_pack": "Interface Sounds",
+      "kenney_file": "confirmation_001.ogg"
+    },
+    {
+      "dest": "hurt.ogg",
+      "note": "受伤",
+      "kenney_pack": "Interface Sounds",
+      "kenney_file": "error_004.ogg"
+    },
+    {
+      "dest": "ui_click.ogg",
+      "note": "升级选卡/结算按钮",
+      "kenney_pack": "Interface Sounds",
+      "kenney_file": "click_001.ogg"
+    },
+    {
+      "dest": "game_over.ogg",
+      "note": "道消",
+      "kenney_pack": "Interface Sounds",
+      "kenney_file": "error_001.ogg"
+    },
+    {
+      "dest": "victory.ogg",
+      "note": "渡劫成功",
+      "kenney_pack": "Interface Sounds",
+      "kenney_file": "confirmation_004.ogg"
+    },
+    {
+      "dest": "pickup.ogg",
+      "note": "灵韵（可选，当前未挂事件）",
+      "kenney_pack": "Interface Sounds",
+      "kenney_file": "click_003.ogg"
+    },
+    {
+      "dest": "bgm_loop.ogg",
+      "note": "试炼 ambient（无缝循环）",
+      "kenney_pack": "Music Loops",
+      "kenney_file": "loop_001.ogg"
+    }
+  ],
+  "fallback": "procedural"
 }

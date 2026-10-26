@@ -372,6 +372,7 @@ export default function CircleSurvivorGame({ onExit }) {
     const s = stateRef.current;
     const choice = s.upgradeChoices?.find((c) => c.id === id);
     if (!choice) return;
+    audio.sfxUiClick();
     choice.apply(s);
     s.pendingLevels -= 1;
     s.upgradeChoices = null;
@@ -384,6 +385,7 @@ export default function CircleSurvivorGame({ onExit }) {
   };
 
   const restart = () => {
+    audio.sfxUiClick();
     audio.stopBgm();
     stateRef.current = createInitialState();
     stateRef.current.bgmOn = hud.bgmOn;
