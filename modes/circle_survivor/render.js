@@ -91,7 +91,7 @@ function drawPlayer(ctx, p, sprites, now) {
 }
 
 function enemySpriteKey(kind) {
-  if (kind.id === 'qi_slime') return 'enemy_green';
+  if (kind.id === 'qi_slime') return 'enemy_yellow';
   if (kind.id === 'wolf_demon') return 'enemy_red';
   if (kind.id === 'shadow_fiend') return 'enemy_blue';
   return 'enemy_boss';

@@ -1,0 +1,16 @@
+{
+  "style_lock": "top-down 90deg, single character, pure white background #FFFFFF, no text, no UI, game sprite, 2px dark outline, xianxia cultivation fantasy, soft cel shading",
+  "output": {
+    "size_px": 512,
+    "target_display_px": 56,
+    "format": "png",
+    "matte": "white_to_alpha"
+  },
+  "regenerate_slots": ["player", "enemy_red", "enemy_blue", "enemy_yellow"],
+  "prompts": {
+    "player": "slot=player: top-down view young male cultivator standing, azure blue daoist robe with gold trim, black hair topknot with jade hairpin, holding faint glowing sword hilt at side, strong readable silhouette, feet visible, circular shadow hint, high contrast edges for 48px thumbnail, xianxia immortal hero, no background objects",
+    "enemy_red": "slot=enemy_red: top-down wolf demon yaoguai, rust red fur and crimson eyes, hunched predator pose facing camera, sharp ears and snout silhouette readable at 32px, dark brown outline, xianxia monster, pure white background",
+    "enemy_blue": "slot=enemy_blue: top-down shadow fiend yaoguai, purple-blue smoky body, horned head, wide shoulders, glowing violet eyes, readable blob silhouette at 32px, xianxia dark spirit, pure white background",
+    "enemy_yellow": "slot=enemy_yellow: top-down small turbid qi slime goblin, yellow-green jelly body, two small horns, cute but evil, simple round silhouette readable at 32px, xianxia low tier monster, pure white background"
+  }
+}
