@@ -15,7 +15,7 @@ const LS_KEY = 'game-dev-pipeline-v1';
 
 export default function GameDevPipeline() {
   const [requirement, setRequirement] = useState('');
-  const [rounds, setRounds] = useState(1);
+  const [rounds, setRounds] = useState(2);
   const [running, setRunning] = useState(false);
   const [stepIndex, setStepIndex] = useState(-1);
   const [log, setLog] = useState('');
@@ -126,21 +126,24 @@ export default function GameDevPipeline() {
       <pre className="gdp-log">{log || '输出将写入 generated/…/game-pipeline/'}</pre>
 
       <section className="gdp-changelog">
-        <h2>本轮开发改动（R1 · 开发）</h2>
+        <h2>R2 · 开发改动清单</h2>
         <ul>
           <li>
-            <code>modes/circle_survivor/</code> 完整 React Canvas 试炼：御剑/雷掌/符箓、破境升级层、渡劫结算
+            <code>balance.js</code>：XP L1≈17、浊气灵韵+1、拾取 52、前 30s spawn、狼 22s 入场、武器常数、渡劫兽 370 血
           </li>
           <li>
-            <code>balance.js</code> 前 30 秒低刷怪 + 快升级，180 秒胜利线与渡劫兽波次
+            <code>CircleSurvivorGame.jsx</code>：120/150/175s 渡劫兽、Esc 退出、1/2/3 破境、灵韵 pickup 音效
           </li>
           <li>
-            <code>render.js</code> / <code>audio.js</code> 矢量修仙风 + 五音 ambient BGM（可关）
+            <code>upgrades.js</code>：神通卡权重 ×1.4、回春/吐纳局内最多 2 次
           </li>
           <li>
-            结算「再入试炼」「返回道台」与升级面板 <code>z-index</code> 修复，避免被 canvas 挡住
+            <code>public/favicon.svg</code>：消除 favicon 404
           </li>
         </ul>
+        <p className="gdp-changelog-note">
+          P0 待流水线：<code>assets/ai/*.png</code> 四槽 + <code>copy_kenney_sfx.mjs</code> 落盘 ogg。
+        </p>
       </section>
     </div>
   );

@@ -1,25 +1,28 @@
-/** 修仙圆内幸存者 · 数值（前 30 秒友好，3 分钟起压） */
+/** 修仙圆内幸存者 · 数值（R2：前 30s 破境、150–180s 渡劫峰） */
 
 export const ARENA_RADIUS = 320;
 export const GAME_DURATION_SEC = 180;
+
+/** 固定秒数召唤渡劫兽（与 pickEnemyKind 无关） */
+export const TRIBULATION_SPAWN_AT_SEC = [120, 150, 175];
 
 export const PLAYER_BASE = {
   radius: 14,
   speed: 155,
   maxHp: 100,
-  pickupRadius: 48,
+  pickupRadius: 52,
   invulnAfterHitMs: 600,
 };
 
-/** 每秒经验曲线：前期快升，后期放缓 */
+/** 每秒经验曲线：L1≈17，前期快升 */
 export function xpToNextLevel(level) {
-  return Math.floor(12 + level * 8 + level * level * 0.6);
+  return Math.floor(10 + level * 7 + level * level * 0.5);
 }
 
 /** 波次：t 为已进行秒数 */
 export function spawnBudgetAt(t) {
-  if (t < 30) return 0.35 + t * 0.012;
-  if (t < 90) return 0.75 + (t - 30) * 0.018;
+  if (t < 30) return 0.42 + t * 0.014;
+  if (t < 90) return 0.75 + (t - 30) * 0.016;
   if (t < 150) return 1.65 + (t - 90) * 0.022;
   return 2.85 + (t - 150) * 0.035;
 }
@@ -32,20 +35,20 @@ export const ENEMY_KINDS = {
     speed: 52,
     damage: 8,
     radius: 11,
-    xp: 3,
+    xp: 4,
     color: '#6b8f71',
     weight: (t) => (t < 45 ? 1 : 0.4),
   },
   wolf_demon: {
     id: 'wolf_demon',
     name: '狼妖',
-    hp: 42,
+    hp: 38,
     speed: 78,
     damage: 14,
     radius: 15,
     xp: 8,
     color: '#8b4513',
-    weight: (t) => (t < 25 ? 0 : t < 120 ? 0.55 : 0.35),
+    weight: (t) => (t < 22 ? 0 : t < 120 ? 0.55 : 0.35),
   },
   shadow_fiend: {
     id: 'shadow_fiend',
@@ -61,13 +64,13 @@ export const ENEMY_KINDS = {
   tribulation_beast: {
     id: 'tribulation_beast',
     name: '渡劫兽',
-    hp: 420,
+    hp: 370,
     speed: 48,
     damage: 35,
     radius: 28,
     xp: 80,
     color: '#c9a227',
-    weight: (t) => (t >= 150 && Math.floor(t) % 45 === 0 ? 1 : 0),
+    weight: () => 0,
     boss: true,
   },
 };
@@ -93,7 +96,7 @@ export const WEAPONS = {
   flying_sword: {
     id: 'flying_sword',
     name: '御剑诀',
-    cooldownMs: 900,
+    cooldownMs: 850,
     damage: 14,
     projectileSpeed: 420,
     pierce: 2,
@@ -101,7 +104,7 @@ export const WEAPONS = {
   thunder_palm: {
     id: 'thunder_palm',
     name: '雷掌',
-    cooldownMs: 1400,
+    cooldownMs: 1550,
     damage: 28,
     aoeRadius: 56,
   },
@@ -109,15 +112,15 @@ export const WEAPONS = {
     id: 'talisman_burst',
     name: '符箓连爆',
     cooldownMs: 2200,
-    damage: 12,
-    count: 6,
+    damage: 11,
+    count: 5,
     spreadDeg: 360,
   },
 };
 
 export function weaponStats(weaponId, level) {
   const base = WEAPONS[weaponId] || WEAPONS.flying_sword;
-  const mul = 1 + (level - 1) * 0.22;
+  const mul = 1 + (level - 1) * 0.18;
   return {
     ...base,
     damage: Math.round(base.damage * mul),

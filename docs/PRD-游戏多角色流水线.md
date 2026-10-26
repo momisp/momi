@@ -13,16 +13,20 @@
 | API | `server/game-dev-pipeline.mjs` → `:3921` |
 | 产出 | `generated/<session>/game-pipeline/R{n}-{role}.md` |
 
-## 本轮（R1 · 开发）交付
+## R1 交付（已完成）
 
-- [x] Canvas 修仙试炼：御剑、雷掌、符箓连爆
-- [x] 前 30 秒低压刷怪 + 快速首次破境
-- [x] 180 秒渡劫胜利 / 气血归零失败
-- [x] 升级 `fixed`  overlay、结算双按钮
-- [x] WebAudio 音效 + 可选 BGM
+- [x] Canvas 修仙试炼闭环、升级/结算 UI
+- [x] manifest + Kenney 拷贝脚本（资源待落盘）
 
-## 后续轮次
+## R2 交付（开发）
 
-- R1 美术：补 `assets/ai/*.png`、符箓/剑气序列帧
-- R1 音效：替换 manifest 中 ogg
-- R1 数值：据 QA 遥测微调 `spawnBudgetAt`
+- [x] 数值：L1 XP≈17、浊气 xp4、pickup52、spawn/武器/渡劫兽按数值评审
+- [x] 渡劫兽定时波 120/150/175s
+- [x] 升级武器加权、回春/吐纳上限 2
+- [x] Esc 返回、破境 1/2/3、灵韵 pickup 音
+- [ ] 四槽 PNG + 10 ogg（流水线 art/audio 执行，非代码阻塞）
+
+## 后续
+
+- R2 QA：180s 通关、60+ 怪帧率、5 局 BGM 回归
+- 美术：enemy_boss 贴图、符箓序列帧

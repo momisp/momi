@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ARENA_RADIUS,
+  ENEMY_KINDS,
   GAME_DURATION_SEC,
   PLAYER_BASE,
   pickEnemyKind,
   spawnBudgetAt,
+  TRIBULATION_SPAWN_AT_SEC,
   weaponStats,
   xpToNextLevel,
 } from './balance.js';
-import { rollUpgradeChoices } from './upgrades.js';
+import { recordUpgradePick, rollUpgradeChoices } from './upgrades.js';
 import { initSprites } from './sprites.js';
 import { clampInArena, drawFrame, pushFx } from './render.js';
 import * as audio from './audio.js';
@@ -45,6 +47,8 @@ function createInitialState() {
     pendingLevels: 0,
     muted: false,
     bgmOn: true,
+    bossMarks: {},
+    upgradePickCounts: {},
   };
 }
 
@@ -55,6 +59,7 @@ export default function CircleSurvivorGame({ onExit }) {
   const spritesRef = useRef({});
   const rafRef = useRef(0);
   const lastTRef = useRef(0);
+  const pickUpgradeRef = useRef(() => {});
 
   const [hud, setHud] = useState({
     hp: 100,
@@ -225,6 +230,15 @@ export default function CircleSurvivorGame({ onExit }) {
           spawnEnemy(s, pickEnemyKind(s.elapsed));
         }
 
+        const sec = Math.floor(s.elapsed);
+        for (const at of TRIBULATION_SPAWN_AT_SEC) {
+          if (sec >= at && !s.bossMarks[at]) {
+            s.bossMarks[at] = true;
+            spawnEnemy(s, ENEMY_KINDS.tribulation_beast);
+            pushFx({ type: 'level', x: 0, y: -ARENA_RADIUS * 0.5, duration: 800 });
+          }
+        }
+
         fireWeapons(s, now);
 
         for (const e of s.enemies) {
@@ -291,6 +305,7 @@ export default function CircleSurvivorGame({ onExit }) {
             if (d < s.player.radius + 10) {
               s.xp += o.value;
               s.orbs.splice(i, 1);
+              audio.sfxPickup();
             }
           }
         }
@@ -322,12 +337,32 @@ export default function CircleSurvivorGame({ onExit }) {
     [syncHud],
   );
 
+  const exitGame = useCallback(() => {
+    audio.stopBgm();
+    if (typeof onExit === 'function') onExit();
+    else window.location.href = '/';
+  }, [onExit]);
+
   useEffect(() => {
     const onKey = (e, down) => {
       keysRef.current[e.key] = down;
       if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
     };
-    const kd = (e) => onKey(e, true);
+    const kd = (e) => {
+      onKey(e, true);
+      const s = stateRef.current;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (s.phase === 'playing' && !s.upgradeChoices) exitGame();
+        return;
+      }
+      if (s.upgradeChoices?.length && ['1', '2', '3'].includes(e.key)) {
+        e.preventDefault();
+        const idx = Number(e.key) - 1;
+        const choice = s.upgradeChoices[idx];
+        if (choice) pickUpgradeRef.current(choice.id);
+      }
+    };
     const ku = (e) => onKey(e, false);
     window.addEventListener('keydown', kd);
     window.addEventListener('keyup', ku);
@@ -335,7 +370,7 @@ export default function CircleSurvivorGame({ onExit }) {
       window.removeEventListener('keydown', kd);
       window.removeEventListener('keyup', ku);
     };
-  }, []);
+  }, [exitGame]);
 
   useEffect(() => {
     let cancelled = false;
@@ -374,6 +409,7 @@ export default function CircleSurvivorGame({ onExit }) {
     if (!choice) return;
     audio.sfxUiClick();
     choice.apply(s);
+    recordUpgradePick(s, choice.id);
     s.pendingLevels -= 1;
     s.upgradeChoices = null;
     if (s.pendingLevels > 0) {
@@ -383,6 +419,8 @@ export default function CircleSurvivorGame({ onExit }) {
     }
     syncHud(s);
   };
+
+  pickUpgradeRef.current = pickUpgrade;
 
   const restart = () => {
     audio.sfxUiClick();
@@ -450,18 +488,22 @@ export default function CircleSurvivorGame({ onExit }) {
 
       <div className="cs-canvas-wrap">
         <canvas ref={canvasRef} className="cs-canvas" />
-        <p className="cs-hint">WASD 移动 · 功法自动施放 · 撑满 {GAME_DURATION_SEC / 60} 分钟即渡劫成功</p>
+        <p className="cs-hint">
+          WASD 移动 · Esc 返回道台 · 破境时按 1/2/3 择法 · 撑满 {GAME_DURATION_SEC / 60} 分钟渡劫成功
+        </p>
       </div>
 
       {showUpgrade && (
         <div className="cs-overlay cs-upgrade" role="dialog" aria-modal="true" aria-label="择法升级">
           <div className="cs-panel cs-upgrade-panel">
             <h2>破境择法</h2>
-            <p className="cs-sub">择一项神通继续试炼</p>
+            <p className="cs-sub">择一项神通继续试炼（点击或按 1 / 2 / 3）</p>
             <div className="cs-upgrade-grid">
-              {hud.upgradeChoices.map((c) => (
+              {hud.upgradeChoices.map((c, i) => (
                 <button key={c.id} type="button" className="cs-upgrade-card" onClick={() => pickUpgrade(c.id)}>
-                  <strong>{c.name}</strong>
+                  <strong>
+                    [{i + 1}] {c.name}
+                  </strong>
                   <span>{c.desc}</span>
                 </button>
               ))}
@@ -485,6 +527,7 @@ export default function CircleSurvivorGame({ onExit }) {
                 type="button"
                 className="cs-btn secondary"
                 onClick={() => {
+                  audio.sfxUiClick();
                   if (typeof onExit === 'function') onExit();
                   else window.location.href = '/';
                 }}
