@@ -60,7 +60,7 @@ def main():
     else:
         print("FAIL balance.js missing")
         sys.exit(1)
-    print(f"SUMMARY: {len(warns)} asset warn(s), core files OK")
+    print(f"SUMMARY: {len(warns)} asset warn(s), core files OK (R2 expects 16 sfx+png slots)")
     sys.exit(0)
 
 
