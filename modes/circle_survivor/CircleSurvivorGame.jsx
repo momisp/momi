@@ -235,6 +235,7 @@ export default function CircleSurvivorGame({ onExit }) {
           if (sec >= at && !s.bossMarks[at]) {
             s.bossMarks[at] = true;
             spawnEnemy(s, ENEMY_KINDS.tribulation_beast);
+            audio.sfxTribulation();
             pushFx({ type: 'level', x: 0, y: -ARENA_RADIUS * 0.5, duration: 800 });
           }
         }
@@ -349,6 +350,7 @@ export default function CircleSurvivorGame({ onExit }) {
       if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
     };
     const kd = (e) => {
+      audio.unlockFromUserGesture();
       onKey(e, true);
       const s = stateRef.current;
       if (e.key === 'Escape') {
@@ -435,6 +437,7 @@ export default function CircleSurvivorGame({ onExit }) {
   };
 
   const toggleMute = () => {
+    audio.unlockFromUserGesture();
     const s = stateRef.current;
     s.muted = !s.muted;
     audio.setMuted(s.muted);

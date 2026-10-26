@@ -70,7 +70,12 @@ function canPlayCooldown(key) {
   return true;
 }
 
-function playBuffer(eventKey, { volume = 1, cooldownKey = eventKey } = {}) {
+function eventVolume(eventKey) {
+  const gain = manifest.event_gain?.[eventKey];
+  return gain != null ? gain : 1;
+}
+
+function playBuffer(eventKey, { volume, cooldownKey = eventKey } = {}) {
   if (muted) return false;
   if (!canPlayCooldown(cooldownKey)) return false;
   const buf = buffers[eventKey];
@@ -79,7 +84,7 @@ function playBuffer(eventKey, { volume = 1, cooldownKey = eventKey } = {}) {
   const src = ac.createBufferSource();
   const g = ac.createGain();
   src.buffer = buf;
-  g.gain.value = volume;
+  g.gain.value = volume ?? eventVolume(eventKey);
   src.connect(g);
   g.connect(sfxGain);
   src.start(0);
@@ -110,6 +115,11 @@ export async function initAudio() {
   await loadManifest();
   ensureCtx();
   await preloadSamples();
+}
+
+/** 首次交互后恢复 AudioContext（避免浏览器 autoplay 限制） */
+export function unlockFromUserGesture() {
+  ensureCtx();
 }
 
 export function setMuted(m) {
@@ -211,5 +221,16 @@ export function sfxVictory() {
 }
 
 export function sfxPickup() {
-  playOrFallback('pickup', () => tone(880, 0.04, 'sine', 0.06), 'pickup');
+  playOrFallback('pickup', () => tone(880, 0.04, 'sine', 0.05), 'pickup');
+}
+
+export function sfxTribulation() {
+  playOrFallback(
+    'tribulation',
+    () => {
+      tone(60, 0.35, 'sawtooth', 0.1, 30);
+      setTimeout(() => tone(120, 0.2, 'triangle', 0.08), 80);
+    },
+    'tribulation',
+  );
 }

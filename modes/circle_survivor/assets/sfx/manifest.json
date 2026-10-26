@@ -1,14 +1,20 @@
 {
-  "version": 1,
+  "version": 2,
+  "round": 2,
   "volumes": {
     "bgm": 0.35,
     "sfx": 0.5
+  },
+  "event_gain": {
+    "pickup": 0.55,
+    "tribulation": 0.85
   },
   "cooldown_ms": {
     "hit": 55,
     "kill": 90,
     "thunder": 220,
-    "pickup": 40
+    "pickup": 65,
+    "tribulation": 3000
   },
   "events": {
     "hit": "hit.ogg",
@@ -20,7 +26,21 @@
     "game_over": "game_over.ogg",
     "victory": "victory.ogg",
     "pickup": "pickup.ogg",
+    "tribulation": "tribulation.ogg",
     "bgm": "bgm_loop.ogg"
+  },
+  "event_labels_zh": {
+    "hit": "剑气/符命中",
+    "kill": "斩妖",
+    "thunder": "雷掌",
+    "level_up": "破境",
+    "hurt": "气血受损",
+    "ui_click": "择法/道台",
+    "game_over": "道消",
+    "victory": "渡劫成功",
+    "pickup": "纳灵韵",
+    "tribulation": "渡劫兽现世",
+    "bgm": "试炼曲"
   },
   "kenney_cc0": [
     {
@@ -42,6 +62,12 @@
       "kenney_file": "impactPlate_heavy_001.ogg"
     },
     {
+      "dest": "tribulation.ogg",
+      "note": "渡劫兽 120/150/175s",
+      "kenney_pack": "Impact Sounds",
+      "kenney_file": "impactMetal_heavy_002.ogg"
+    },
+    {
       "dest": "level_up.ogg",
       "note": "破境",
       "kenney_pack": "Interface Sounds",
@@ -55,7 +81,7 @@
     },
     {
       "dest": "ui_click.ogg",
-      "note": "升级选卡/结算按钮",
+      "note": "升级选卡/结算/Esc 前按钮",
       "kenney_pack": "Interface Sounds",
       "kenney_file": "click_001.ogg"
     },
@@ -73,13 +99,13 @@
     },
     {
       "dest": "pickup.ogg",
-      "note": "灵韵（可选，当前未挂事件）",
+      "note": "灵韵拾取（R2 已挂事件）",
       "kenney_pack": "Interface Sounds",
       "kenney_file": "click_003.ogg"
     },
     {
       "dest": "bgm_loop.ogg",
-      "note": "试炼 ambient（无缝循环）",
+      "note": "试炼 ambient 循环",
       "kenney_pack": "Music Loops",
       "kenney_file": "loop_001.ogg"
     }
