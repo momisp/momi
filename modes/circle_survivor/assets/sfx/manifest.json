@@ -1,8 +1,8 @@
 {
-  "version": 3,
-  "round": 3,
+  "version": 4,
+  "round": 4,
   "volumes": {
-    "bgm": 0.35,
+    "bgm": 0.32,
     "sfx": 0.5
   },
   "event_gain": {

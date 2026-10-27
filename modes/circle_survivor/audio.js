@@ -9,14 +9,14 @@ let bgmEnabled = true;
 
 const buffers = {};
 const lastPlay = {};
-let manifest = { volumes: { bgm: 0.35, sfx: 0.5 }, cooldown_ms: {}, events: {} };
+let manifest = { volumes: { bgm: 0.32, sfx: 0.5 }, cooldown_ms: {}, events: {} };
 
 async function loadManifest() {
   try {
     const res = await fetch(new URL('./assets/sfx/manifest.json', import.meta.url));
     if (res.ok) manifest = await res.json();
   } catch {
-    manifest = { volumes: { bgm: 0.35, sfx: 0.5 }, events: {} };
+    manifest = { volumes: { bgm: 0.32, sfx: 0.5 }, events: {} };
   }
   return manifest;
 }
@@ -55,7 +55,7 @@ function ensureCtx() {
 }
 
 function applyVolumeGains() {
-  const bgmV = manifest.volumes?.bgm ?? 0.35;
+  const bgmV = manifest.volumes?.bgm ?? 0.32;
   const sfxV = manifest.volumes?.sfx ?? 0.5;
   if (bgmGain) bgmGain.gain.value = muted || !bgmEnabled ? 0 : bgmV;
   if (sfxGain) sfxGain.gain.value = muted ? 0 : sfxV;

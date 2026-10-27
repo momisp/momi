@@ -1,0 +1,45 @@
+{
+  "round": 4,
+  "goal": "commercial_survivor_listen_feel_xianxia",
+  "dest_dir": "modes/circle_survivor/assets/sfx",
+  "copy_script": "modes/circle_survivor/tools/copy_kenney_sfx.mjs",
+  "execute": "node modes/circle_survivor/tools/copy_kenney_sfx.mjs --root <KENNEY_ROOT>",
+  "web_consumer": "modes/circle_survivor/audio.js",
+  "pygame_consumer": "modes/circle_survivor/main.py",
+  "required_ogg_count": 11,
+  "playable_r5_loaded": 5,
+  "pygame_alias_copy": [
+    { "from": "level_up.ogg", "also_as": "levelup.ogg", "reason": "main.py SfxBank key levelup" }
+  ],
+  "priority_copy_order": [
+    "bgm_loop.ogg",
+    "level_up.ogg",
+    "pickup.ogg",
+    "thunder.ogg",
+    "tribulation.ogg",
+    "victory.ogg",
+    "game_over.ogg",
+    "hit.ogg",
+    "hurt.ogg",
+    "kill.ogg",
+    "ui_click.ogg"
+  ],
+  "kenney_map": [
+    { "dest": "hit.ogg", "event": "hit", "kenney_pack": "Impact Sounds", "kenney_file": "impactMetal_light_000.ogg" },
+    { "dest": "kill.ogg", "event": "kill", "kenney_pack": "Impact Sounds", "kenney_file": "impactGeneric_light_003.ogg" },
+    { "dest": "thunder.ogg", "event": "thunder", "kenney_pack": "Impact Sounds", "kenney_file": "impactPlate_heavy_001.ogg" },
+    { "dest": "tribulation.ogg", "event": "tribulation", "kenney_pack": "Impact Sounds", "kenney_file": "impactMetal_heavy_002.ogg" },
+    { "dest": "level_up.ogg", "event": "level_up", "kenney_pack": "Interface Sounds", "kenney_file": "confirmation_001.ogg" },
+    { "dest": "hurt.ogg", "event": "hurt", "kenney_pack": "Interface Sounds", "kenney_file": "error_004.ogg" },
+    { "dest": "ui_click.ogg", "event": "ui_click", "kenney_pack": "Interface Sounds", "kenney_file": "click_001.ogg" },
+    { "dest": "game_over.ogg", "event": "game_over", "kenney_pack": "Interface Sounds", "kenney_file": "error_001.ogg" },
+    { "dest": "victory.ogg", "event": "victory", "kenney_pack": "Interface Sounds", "kenney_file": "confirmation_004.ogg" },
+    { "dest": "pickup.ogg", "event": "pickup", "kenney_pack": "Interface Sounds", "kenney_file": "click_003.ogg" },
+    { "dest": "bgm_loop.ogg", "event": "bgm", "kenney_pack": "Music Loops", "kenney_file": "loop_001.ogg" }
+  ],
+  "post_copy": [
+    "cp level_up.ogg levelup.ogg  # pygame playable",
+    "sync playable/assets/sfx/ and modes/circle_survivor/assets/sfx/",
+    "Web: /play/circle-survivor 首次 WASD 后耳听破境/纳灵/BGM"
+  ]
+}

@@ -70,6 +70,13 @@ function main() {
     console.log(`OK   ${item.dest} ← ${src}`);
     ok += 1;
   }
+  const levelUp = path.join(SFX_DIR, 'level_up.ogg');
+  const levelUpPy = path.join(SFX_DIR, 'levelup.ogg');
+  if (fs.existsSync(levelUp)) {
+    fs.copyFileSync(levelUp, levelUpPy);
+    console.log('OK   levelup.ogg ← level_up.ogg (pygame SfxBank alias)');
+  }
+
   console.log(`\n完成：${ok} 拷贝，${miss} 缺失。缺失时 Web 端仍走 procedural fallback。`);
   process.exit(miss > 0 ? 2 : 0);
 }
