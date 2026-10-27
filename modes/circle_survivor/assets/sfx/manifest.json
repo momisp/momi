@@ -1,11 +1,12 @@
 {
-  "version": 2,
-  "round": 2,
+  "version": 3,
+  "round": 3,
   "volumes": {
     "bgm": 0.35,
     "sfx": 0.5
   },
   "event_gain": {
+    "hit": 0.72,
     "pickup": 0.55,
     "tribulation": 0.85
   },
@@ -63,7 +64,7 @@
     },
     {
       "dest": "tribulation.ogg",
-      "note": "渡劫兽 120/150/175s",
+      "note": "渡劫兽 150/175s · 同屏 1 劫",
       "kenney_pack": "Impact Sounds",
       "kenney_file": "impactMetal_heavy_002.ogg"
     },

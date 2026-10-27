@@ -1,0 +1,26 @@
+{
+  "round": 3,
+  "dest_dir": "modes/circle_survivor/assets/sfx",
+  "copy_script": "modes/circle_survivor/tools/copy_kenney_sfx.mjs",
+  "manifest": "modes/circle_survivor/assets/sfx/manifest.json",
+  "required_ogg_count": 11,
+  "execute": "node modes/circle_survivor/tools/copy_kenney_sfx.mjs --root <KENNEY_ROOT>",
+  "files": [
+    { "dest": "hit.ogg", "event": "hit", "zh": "剑气/符命中", "kenney_pack": "Impact Sounds", "kenney_file": "impactMetal_light_000.ogg" },
+    { "dest": "kill.ogg", "event": "kill", "zh": "斩妖", "kenney_pack": "Impact Sounds", "kenney_file": "impactGeneric_light_003.ogg" },
+    { "dest": "thunder.ogg", "event": "thunder", "zh": "雷掌", "kenney_pack": "Impact Sounds", "kenney_file": "impactPlate_heavy_001.ogg" },
+    { "dest": "tribulation.ogg", "event": "tribulation", "zh": "渡劫兽现世", "kenney_pack": "Impact Sounds", "kenney_file": "impactMetal_heavy_002.ogg" },
+    { "dest": "level_up.ogg", "event": "level_up", "zh": "破境", "kenney_pack": "Interface Sounds", "kenney_file": "confirmation_001.ogg" },
+    { "dest": "hurt.ogg", "event": "hurt", "zh": "气血受损", "kenney_pack": "Interface Sounds", "kenney_file": "error_004.ogg" },
+    { "dest": "ui_click.ogg", "event": "ui_click", "zh": "择法/道台", "kenney_pack": "Interface Sounds", "kenney_file": "click_001.ogg" },
+    { "dest": "game_over.ogg", "event": "game_over", "zh": "道消", "kenney_pack": "Interface Sounds", "kenney_file": "error_001.ogg" },
+    { "dest": "victory.ogg", "event": "victory", "zh": "渡劫成功", "kenney_pack": "Interface Sounds", "kenney_file": "confirmation_004.ogg" },
+    { "dest": "pickup.ogg", "event": "pickup", "zh": "纳灵韵", "kenney_pack": "Interface Sounds", "kenney_file": "click_003.ogg" },
+    { "dest": "bgm_loop.ogg", "event": "bgm", "zh": "试炼曲", "kenney_pack": "Music Loops", "kenney_file": "loop_001.ogg" }
+  ],
+  "post_copy_verify": [
+    "ls modes/circle_survivor/assets/sfx/*.ogg | wc -l  → 11",
+    "试玩 /play/circle-survivor：WASD 后破境听 confirmation，150s 听 tribulation 重击",
+    "5 局「再入试炼」：无双重 BGM（stopBgm + 单 bgmSource）"
+  ]
+}
