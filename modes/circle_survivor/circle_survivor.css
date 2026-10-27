@@ -1,55 +1,112 @@
 .cs-host {
   min-height: 100vh;
-  background: #070b10;
+  background: radial-gradient(ellipse 120% 80% at 50% 0%, #0f172a 0%, #020617 55%, #000 100%);
   color: #e2e8f0;
 }
 
 .cs-host-nav {
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(2, 6, 23, 0.6);
 }
 
 .cs-host-nav a {
   color: #7dd3fc;
   text-decoration: none;
+  font-size: 0.88rem;
+}
+
+.cs-host-title {
+  margin-left: 1rem;
+  font-size: 0.82rem;
+  color: #64748b;
+  letter-spacing: 0.08em;
 }
 
 .cs-root {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 48px);
-  max-width: 960px;
+  height: calc(100vh - 44px);
+  max-width: 1024px;
   margin: 0 auto;
+  padding: 0 0.5rem 0.5rem;
 }
 
-.cs-hud {
+.cs-hud-premium {
+  display: grid;
+  grid-template-columns: 1fr minmax(140px, 1.2fr) auto;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  margin-top: 0.35rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.55));
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.cs-hud-left {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1.5rem;
   align-items: center;
-  padding: 0.65rem 1rem;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), transparent);
+  gap: 0.45rem 0.65rem;
 }
 
-.cs-hud-block {
+.cs-badge-level {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #fcd34d;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(120, 53, 15, 0.35);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.cs-hp-pips {
+  display: flex;
+  gap: 3px;
+}
+
+.cs-hp-pip {
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(71, 85, 105, 0.8);
+  transition: background 0.12s, box-shadow 0.12s;
+}
+
+.cs-hp-pip.on {
+  background: linear-gradient(180deg, #f87171, #b91c1c);
+  border-color: rgba(254, 202, 202, 0.5);
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.45);
+}
+
+.cs-hp-num {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.cs-hud-xp {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  min-width: 180px;
+  gap: 0.45rem;
 }
 
 .cs-label {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: #94a3b8;
   white-space: nowrap;
 }
 
 .cs-bar {
   flex: 1;
-  height: 8px;
-  background: #1e293b;
-  border-radius: 4px;
+  height: 9px;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 5px;
   overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.15);
   min-width: 80px;
 }
 
@@ -61,20 +118,9 @@
 
 .cs-bar-fill.xp {
   height: 100%;
-  background: linear-gradient(90deg, #0369a1, #38bdf8);
+  background: linear-gradient(90deg, #0284c7, #38bdf8, #7dd3fc);
   transition: width 0.15s ease;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
-}
-
-@keyframes cs-chip-in {
-  from {
-    opacity: 0;
-    transform: translateX(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
 }
 
 .cs-val {
@@ -85,47 +131,76 @@
 .cs-hud-meta {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-left: auto;
-  font-size: 0.85rem;
+  gap: 0.55rem;
+  font-size: 0.82rem;
 }
 
-.cs-canvas-wrap {
+.cs-kills {
+  color: #cbd5e1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-stage {
   flex: 1;
   position: relative;
   min-height: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  box-shadow:
+    inset 0 0 60px rgba(14, 165, 233, 0.06),
+    0 12px 40px rgba(0, 0, 0, 0.45);
+  background: #020617;
+}
+
+.cs-timer-overlay {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+  text-align: center;
+  padding: 0.25rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.55);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  backdrop-filter: blur(6px);
+}
+
+.cs-timer-main {
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #fef3c7;
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
+}
+
+.cs-timer-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-left: 0.25rem;
 }
 
 .cs-weapon-rail {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 52px;
+  right: 10px;
   z-index: 2;
-  width: 108px;
+  width: 112px;
   padding: 0.5rem 0.65rem;
   border-radius: 10px;
-  background: linear-gradient(160deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.65));
-  border: 1px solid rgba(56, 189, 248, 0.28);
-  box-shadow: 0 0 24px rgba(14, 165, 233, 0.12);
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.7));
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  box-shadow: 0 0 24px rgba(14, 165, 233, 0.1);
   pointer-events: none;
-  animation: cs-rail-glow 4s ease-in-out infinite;
-}
-
-@keyframes cs-rail-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 18px rgba(14, 165, 233, 0.1);
-  }
-  50% {
-    box-shadow: 0 0 28px rgba(56, 189, 248, 0.22);
-  }
 }
 
 .cs-weapon-rail-title {
   display: block;
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  color: #64748b;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  color: #94a3b8;
   margin-bottom: 0.35rem;
 }
 
@@ -146,7 +221,6 @@
   border-radius: 6px;
   background: rgba(2, 6, 23, 0.55);
   border-left: 3px solid #38bdf8;
-  animation: cs-chip-in 0.35s ease-out;
 }
 
 .cs-weapon-chip[data-lv='5'] {
@@ -177,8 +251,8 @@
   left: 0;
   right: 0;
   text-align: center;
-  font-size: 0.75rem;
-  color: rgba(148, 163, 184, 0.7);
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.65);
   pointer-events: none;
 }
 
@@ -189,24 +263,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(2, 6, 12, 0.72);
-  backdrop-filter: blur(4px);
+  background: rgba(2, 6, 12, 0.78);
+  backdrop-filter: blur(8px);
   pointer-events: auto;
 }
 
 .cs-panel {
-  background: linear-gradient(145deg, #0f172a, #1e293b);
-  border: 1px solid rgba(125, 211, 252, 0.25);
-  border-radius: 12px;
+  background: linear-gradient(155deg, #0c1222, #1a2332);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 14px;
   padding: 1.5rem 1.75rem;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
   max-width: min(92vw, 520px);
 }
 
 .cs-panel h2 {
   margin: 0 0 0.35rem;
-  font-size: 1.35rem;
-  color: #f0f9ff;
+  font-size: 1.4rem;
+  color: #fef9c3;
+  letter-spacing: 0.04em;
 }
 
 .cs-sub {
@@ -216,18 +291,7 @@
 }
 
 .cs-upgrade-panel {
-  max-width: min(96vw, 640px);
-  animation: cs-panel-pulse 2.8s ease-in-out infinite;
-}
-
-@keyframes cs-panel-pulse {
-  0%,
-  100% {
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 rgba(56, 189, 248, 0);
-  }
-  50% {
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 32px rgba(56, 189, 248, 0.18);
-  }
+  max-width: min(96vw, 680px);
 }
 
 .cs-upgrade-grid {
@@ -242,34 +306,71 @@
 }
 
 .cs-upgrade-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.35rem;
-  padding: 1rem;
+  padding: 1rem 1rem 0.9rem;
   text-align: left;
-  background: rgba(30, 41, 59, 0.8);
+  background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(56, 189, 248, 0.35);
-  border-radius: 10px;
+  border-radius: 12px;
   color: #e2e8f0;
   cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s;
+  transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.cs-upgrade-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.cs-upgrade-weapon {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.cs-upgrade-weapon::before {
+  background: linear-gradient(135deg, #fbbf24, transparent 60%);
+}
+
+.cs-upgrade-passive {
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.cs-upgrade-passive::before {
+  background: linear-gradient(135deg, #38bdf8, transparent 60%);
 }
 
 .cs-upgrade-card:hover {
-  border-color: #38bdf8;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.cs-upgrade-tag {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: #64748b;
+  text-transform: uppercase;
 }
 
 .cs-upgrade-card strong {
-  color: #7dd3fc;
-  font-size: 1rem;
+  color: #f0f9ff;
+  font-size: 1.02rem;
 }
 
-.cs-upgrade-card span {
+.cs-upgrade-card span:last-child {
   font-size: 0.82rem;
   color: #cbd5e1;
   line-height: 1.35;
+}
+
+.cs-settle-panel h2 {
+  color: #fef3c7;
 }
 
 .cs-settle-actions {
@@ -288,8 +389,9 @@
 }
 
 .cs-btn.primary {
-  background: linear-gradient(135deg, #0284c7, #0ea5e9);
-  color: #fff;
+  background: linear-gradient(135deg, #b45309, #f59e0b);
+  color: #1c1917;
+  font-weight: 600;
 }
 
 .cs-btn.secondary {
@@ -299,11 +401,20 @@
 }
 
 .cs-btn-ghost {
-  background: transparent;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.25);
   color: #cbd5e1;
-  padding: 0.2rem 0.5rem;
+  padding: 0.22rem 0.55rem;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 640px) {
+  .cs-hud-premium {
+    grid-template-columns: 1fr;
+  }
+  .cs-timer-main {
+    font-size: 1.15rem;
+  }
 }

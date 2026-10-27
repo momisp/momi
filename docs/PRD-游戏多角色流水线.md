@@ -35,7 +35,15 @@
 - [x] `circle_survivor.css`：神通栏光晕、赐法面板脉动
 - [ ] 四槽 PNG + ogg 落盘（仍阻塞「完善」视听验收）
 
+## R4–R6 交付（开发 · 对标商用 polish）
+
+- [x] playable/pygame：四槽 PNG、粒子、SFX 接线（R4/R5 自测包）
+- [x] **Web 试玩 R6**：`visual_polish.js` 震屏/飘字/暗角；`procedural_art.js` 无贴图高质 fallback
+- [x] `render.js` 结界扫光、击杀粒子、渐变背景；商用风 HUD（气血段、顶栏计时）
+- [x] 赐法卡神通/心法分色；舞台边框与金线 UI
+- [ ] Web 端同步 `assets/ai/*.png` + 11 ogg（与 playable 对齐）
+
 ## 后续
 
-- R3 QA：180s 通关、60+ 怪帧率、5 局 BGM 回归、10 局破境 ≤28s
-- 美术：enemy_boss 贴图、符箓序列帧
+- QA：180s 通关、60+ 怪帧率、5 局 BGM、耳听 Kenney
+- 美术：enemy_boss、红狼精修（可选）

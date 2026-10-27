@@ -14,6 +14,7 @@ import { recordUpgradePick, rollUpgradeChoices } from './upgrades.js';
 import { initSprites } from './sprites.js';
 import { clampInArena, drawFrame, pushFx } from './render.js';
 import { createAmbientParticles, tickAmbientParticles } from './scene_ambient.js';
+import { addShake, createPolishState, pushFloat, tickPolish } from './visual_polish.js';
 import * as audio from './audio.js';
 import './circle_survivor.css';
 
@@ -65,6 +66,7 @@ export default function CircleSurvivorGame({ onExit }) {
   const keysRef = useRef({});
   const spritesRef = useRef({});
   const ambientRef = useRef(createAmbientParticles());
+  const polishRef = useRef(createPolishState());
   const rafRef = useRef(0);
   const lastTRef = useRef(0);
   const pickUpgradeRef = useRef(() => {});
@@ -241,6 +243,7 @@ export default function CircleSurvivorGame({ onExit }) {
         }
 
         tickAmbientParticles(ambientRef.current, dt);
+        tickPolish(polishRef.current, dt);
 
         const sec = Math.floor(s.elapsed);
         for (const at of TRIBULATION_SPAWN_AT_SEC) {
@@ -293,6 +296,14 @@ export default function CircleSurvivorGame({ onExit }) {
             s.orbs.push({ x: e.x, y: e.y, value: e.kind.xp });
             s.kills += 1;
             audio.sfxKill();
+            pushFx({
+              type: 'death',
+              x: e.x,
+              y: e.y,
+              duration: 380,
+              color: e.kind.boss ? '#fbbf24' : '#6ee7b7',
+            });
+            pushFloat(polishRef.current, e.x, e.y - 8, `+${e.kind.xp}`, '#a7f3d0');
             s.enemies.splice(i, 1);
             continue;
           }
@@ -304,7 +315,9 @@ export default function CircleSurvivorGame({ onExit }) {
             s.player.hp -= e.kind.damage;
             s.player.invulnUntil = now + s.player.invulnAfterHitMs;
             audio.sfxPlayerHurt();
+            addShake(polishRef.current, e.kind.boss ? 9 : 5);
             pushFx({ type: 'hit', x: s.player.x, y: s.player.y, duration: 300 });
+            pushFloat(polishRef.current, s.player.x, s.player.y - 16, `-${e.kind.damage}`, '#f87171');
           }
         }
 
@@ -319,6 +332,7 @@ export default function CircleSurvivorGame({ onExit }) {
             }
             if (d < s.player.radius + 10) {
               s.xp += o.value;
+              pushFloat(polishRef.current, o.x, o.y, `+${o.value}`, '#67e8f9');
               s.orbs.splice(i, 1);
               audio.sfxPickup();
             }
@@ -343,7 +357,7 @@ export default function CircleSurvivorGame({ onExit }) {
       const ctx = canvas.getContext('2d');
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      drawFrame(ctx, w, h, s, spritesRef.current, now, ambientRef.current);
+      drawFrame(ctx, w, h, s, spritesRef.current, now, ambientRef.current, polishRef.current);
 
       if (Math.floor(now / 200) !== Math.floor((now - dt * 1000) / 200)) syncHud(s);
       rafRef.current = requestAnimationFrame(tick);
@@ -442,6 +456,7 @@ export default function CircleSurvivorGame({ onExit }) {
     audio.stopBgm();
     stateRef.current = createInitialState();
     ambientRef.current = createAmbientParticles();
+    polishRef.current = createPolishState();
     stateRef.current.bgmOn = hud.bgmOn;
     stateRef.current.muted = hud.muted;
     audio.setMuted(hud.muted);
@@ -473,27 +488,31 @@ export default function CircleSurvivorGame({ onExit }) {
 
   const showUpgrade = hud.phase === 'playing' && hud.upgradeChoices?.length;
 
+  const hpSegments = 10;
+  const hpFilled = Math.ceil((hud.hp / hud.maxHp) * hpSegments);
+
   return (
     <div className="cs-root">
-      <header className="cs-hud">
-        <div className="cs-hud-block">
-          <span className="cs-label">气血</span>
-          <div className="cs-bar">
-            <div className="cs-bar-fill hp" style={{ width: `${(hud.hp / hud.maxHp) * 100}%` }} />
+      <header className="cs-hud cs-hud-premium">
+        <div className="cs-hud-left">
+          <span className="cs-badge-level">修为 · L{hud.level}</span>
+          <div className="cs-hp-pips" aria-label={`气血 ${hud.hp}/${hud.maxHp}`}>
+            {Array.from({ length: hpSegments }, (_, i) => (
+              <span key={i} className={`cs-hp-pip ${i < hpFilled ? 'on' : ''}`} />
+            ))}
           </div>
-          <span className="cs-val">
+          <span className="cs-val cs-hp-num">
             {hud.hp}/{hud.maxHp}
           </span>
         </div>
-        <div className="cs-hud-block">
-          <span className="cs-label">修为 L{hud.level}</span>
+        <div className="cs-hud-xp">
+          <span className="cs-label">灵力</span>
           <div className="cs-bar">
             <div className="cs-bar-fill xp" style={{ width: `${(hud.xp / hud.xpNext) * 100}%` }} />
           </div>
         </div>
         <div className="cs-hud-meta">
-          <span>{fmtTime(hud.elapsed)} / {fmtTime(GAME_DURATION_SEC)}</span>
-          <span>斩妖 {hud.kills}</span>
+          <span className="cs-kills">斩妖 {hud.kills}</span>
           <button type="button" className="cs-btn-ghost" onClick={toggleMute}>
             {hud.muted ? '🔇' : '🔊'}
           </button>
@@ -503,7 +522,11 @@ export default function CircleSurvivorGame({ onExit }) {
         </div>
       </header>
 
-      <div className="cs-canvas-wrap">
+      <div className="cs-canvas-wrap cs-stage">
+        <div className="cs-timer-overlay" aria-live="polite">
+          <span className="cs-timer-main">{fmtTime(hud.elapsed)}</span>
+          <span className="cs-timer-sub">/ {fmtTime(GAME_DURATION_SEC)}</span>
+        </div>
         <aside className="cs-weapon-rail" aria-label="已习神通">
           <span className="cs-weapon-rail-title">神通</span>
           <ul className="cs-weapon-list">
@@ -532,7 +555,13 @@ export default function CircleSurvivorGame({ onExit }) {
             <p className="cs-sub">择一项神通继续试炼（点击或按 1 / 2 / 3）</p>
             <div className="cs-upgrade-grid">
               {hud.upgradeChoices.map((c, i) => (
-                <button key={c.id} type="button" className="cs-upgrade-card" onClick={() => pickUpgrade(c.id)}>
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`cs-upgrade-card cs-upgrade-${c.category || 'passive'}`}
+                  onClick={() => pickUpgrade(c.id)}
+                >
+                  <span className="cs-upgrade-tag">{c.category === 'weapon' ? '神通' : '心法'}</span>
                   <strong>
                     [{i + 1}] {c.name}
                   </strong>

@@ -15,7 +15,7 @@ const LS_KEY = 'game-dev-pipeline-v1';
 
 export default function GameDevPipeline() {
   const [requirement, setRequirement] = useState('');
-  const [rounds, setRounds] = useState(3);
+  const [rounds, setRounds] = useState(6);
   const [running, setRunning] = useState(false);
   const [stepIndex, setStepIndex] = useState(-1);
   const [log, setLog] = useState('');
@@ -99,7 +99,7 @@ export default function GameDevPipeline() {
           <input
             type="number"
             min={1}
-            max={3}
+            max={6}
             value={rounds}
             onChange={(e) => setRounds(e.target.value)}
           />
@@ -126,33 +126,29 @@ export default function GameDevPipeline() {
       <pre className="gdp-log">{log || '输出将写入 generated/…/game-pipeline/'}</pre>
 
       <section className="gdp-changelog">
-        <h2>R3 · 开发改动清单（观感灵动 + 渡劫调平）</h2>
+        <h2>R6 · Web 试玩 · 对标商用 polish（修仙皮）</h2>
         <ul>
           <li>
-            <code>scene_ambient.js</code>（新）：结界内飘动灵气粒子，无贴图依赖
+            <code>visual_polish.js</code>：受击震屏、伤害/灵韵飘字、全屏暗角
           </li>
           <li>
-            <code>render.js</code>：呼吸结界、旋转阵纹、灵韵/剑气/符箓/渡劫环 FX；<code>drawFrame</code> 接粒子层
+            <code>procedural_art.js</code>：无 PNG 时高质俯视修士/妖兽（阴影+渐变）
           </li>
           <li>
-            <code>balance.js</code>：渡劫波 <strong>150/175s</strong>、兽 HP 330、移速 44；后段 spawn 2.75+0.032、影魔权重 0.42
+            <code>render.js</code>：结界扫光弧、击杀粒子 FX、渐变场背景、灵韵高光圈
           </li>
           <li>
-            <code>CircleSurvivorGame.jsx</code>：同屏仅 1 渡劫兽、<code>tribulation_warn</code>、右侧神通 HUD、「天道赐法 · 三选一」
+            <code>CircleSurvivorGame.jsx</code>：polish 接入；气血十段；顶栏倒计时；赐法卡神通/心法分色
           </li>
           <li>
-            <code>circle_survivor.css</code>：神通栏光晕、赐法面板脉动、XP 条微光
+            <code>circle_survivor.css</code>：金线玻璃 HUD、舞台边框、幸存者式计时条
           </li>
         </ul>
-        <h3>R2 回顾</h3>
+        <h3>R3–R5 回顾</h3>
         <ul>
-          <li>
-            <code>upgrades.js</code>：神通卡 ×1.4、回春/吐纳上限 2；Esc、1/2/3 破境、manifest v2 音效映射
-          </li>
+          <li>R3 粒子/渡劫 150·175；playable 四槽 PNG + SFX 5/5（R4/R5）</li>
+          <li>P0：Web 路由同步 <code>assets/ai</code> + Kenney 11 ogg</li>
         </ul>
-        <p className="gdp-changelog-note">
-          P0 待流水线：<code>assets/ai/*.png</code> 四槽 + <code>copy_kenney_sfx.mjs</code> 落盘 11 ogg（含 tribulation）。
-        </p>
       </section>
     </div>
   );
