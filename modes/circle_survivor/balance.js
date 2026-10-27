@@ -1,10 +1,10 @@
-/** 修仙圆内幸存者 · 数值（R2：前 30s 破境、150–180s 渡劫峰） */
+/** 修仙圆内幸存者 · 数值（R3：渡劫峰调平 + 观感迭代不改节奏） */
 
 export const ARENA_RADIUS = 320;
 export const GAME_DURATION_SEC = 180;
 
-/** 固定秒数召唤渡劫兽（与 pickEnemyKind 无关） */
-export const TRIBULATION_SPAWN_AT_SEC = [120, 150, 175];
+/** 固定秒数召唤渡劫兽；同屏仅一只（由逻辑层保证） */
+export const TRIBULATION_SPAWN_AT_SEC = [150, 175];
 
 export const PLAYER_BASE = {
   radius: 14,
@@ -24,7 +24,7 @@ export function spawnBudgetAt(t) {
   if (t < 30) return 0.42 + t * 0.014;
   if (t < 90) return 0.75 + (t - 30) * 0.016;
   if (t < 150) return 1.65 + (t - 90) * 0.022;
-  return 2.85 + (t - 150) * 0.035;
+  return 2.75 + (t - 150) * 0.032;
 }
 
 export const ENEMY_KINDS = {
@@ -59,13 +59,13 @@ export const ENEMY_KINDS = {
     radius: 18,
     xp: 18,
     color: '#4a3a6b',
-    weight: (t) => (t < 60 ? 0 : t < 150 ? 0.35 : 0.5),
+    weight: (t) => (t < 60 ? 0 : t < 150 ? 0.35 : 0.42),
   },
   tribulation_beast: {
     id: 'tribulation_beast',
     name: '渡劫兽',
-    hp: 370,
-    speed: 48,
+    hp: 330,
+    speed: 44,
     damage: 35,
     radius: 28,
     xp: 80,

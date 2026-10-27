@@ -11,7 +11,7 @@ const sessions = new Map();
 
 const ROLE_STUBS = {
   dev: (req, round) =>
-    `# R${round} 开发\n\n需求摘要：${req.slice(0, 200)}\n\n- 已实现 modes/circle_survivor React 宿主\n- balance 前30秒/3分钟曲线\n- 结算与升级 UI 层`,
+    `# R${round} 开发\n\n需求摘要：${req.slice(0, 200)}\n\n- modes/circle_survivor：scene_ambient 粒子、render 呼吸结界/FX\n- 渡劫 150/175s、同屏 1 劫、神通 HUD、天道赐法三选一\n- balance 后段 spawn 微调；资源 PNG/ogg 仍待 art/audio 落盘`,
   'art-ui': () => `# 美术UI\n\n- 矢量修仙主角/妖兽 fallback\n- 灵气圈、符箓、雷环特效\n- slots.json 接 PNG 贴图槽`,
   audio: () => `# 音效\n\n- WebAudio procedural：斩妖、雷掌、破境、败北/胜利\n- 可选 manifest.ogg；BGM 五音 ambient 开关`,
   balance: () => `# 数值\n\n- xpToNextLevel 前期 12+\n- spawnBudgetAt 分段增长\n- 150s+ 渡劫兽`,
