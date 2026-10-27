@@ -343,7 +343,6 @@ export default function CircleSurvivorGame({ onExit }) {
       const ctx = canvas.getContext('2d');
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      ctx.translate(w / 2, h / 2);
       drawFrame(ctx, w, h, s, spritesRef.current, now, ambientRef.current);
 
       if (Math.floor(now / 200) !== Math.floor((now - dt * 1000) / 200)) syncHud(s);
