@@ -1,0 +1,43 @@
+{
+  "round": 3,
+  "style_lock": "top-down 90deg orthographic, ONE character only centered, pure white background #FFFFFF, no text no watermark no UI frame, game sprite single unit, 2px dark outline #1a1a2e, xianxia cultivation fantasy, cel shading, saturated local colors, high contrast for dark arena #060a10, NO outer glow NO full-body aura NO motion blur NO particle cloud",
+  "output": {
+    "size_px": 512,
+    "target_display_px": {
+      "player": 39,
+      "enemy_red": 33,
+      "enemy_blue": 40,
+      "enemy_yellow": 24
+    },
+    "safe_margin_px": 56,
+    "format": "png",
+    "matte": "white_to_alpha",
+    "dest_dir": "modes/circle_survivor/assets/ai",
+    "filenames": {
+      "player": "player.png",
+      "enemy_red": "enemy_red.png",
+      "enemy_blue": "enemy_blue.png",
+      "enemy_yellow": "enemy_yellow.png"
+    }
+  },
+  "regenerate_slots": ["player", "enemy_red", "enemy_blue", "enemy_yellow"],
+  "game_binding": {
+    "player": "修士 · 程序层已有青蓝灵韵环，贴图禁止再画大光晕",
+    "enemy_red": "wolf_demon 狼妖",
+    "enemy_blue": "shadow_fiend 影魔",
+    "enemy_yellow": "qi_slime 浊气小妖（黄绿高亮，非 PRD 赤煞红）"
+  },
+  "prompts": {
+    "player": "slot=player: top-down 90deg young male daoist cultivator, mid-walk stride one foot forward, azure robe #4db8e8 with gold trim #d4af37, black hair topknot jade hairpin, slim vertical silhouette 65% canvas height, head at upper third, feet bottom center, small bronze sword hilt at left hip only, strong 2px #1a1a2e outline, bright skin and robe edges for dark background, NO halo NO aura circle NO sword beam NO cape spread, readable head-shoulders at 40px thumbnail, xianxia hero, pure white background",
+    "enemy_red": "slot=enemy_red: top-down wolf yaoguai, snout pointing UP toward top of image, rust red fur #d64545 with darker #7a2020 back, triangular ears, compact predator 72% frame height, small crimson eyes white catchlight, 2px dark outline, readable triangle silhouette at 32px on #12202c background, xianxia beast, pure white background, no blood no text",
+    "enemy_blue": "slot=enemy_blue: top-down shadow fiend yaoguai humanoid, broad shoulders forward, purple-blue body #6b5b95 with violet highlight #a78bfa on shoulder tops, small horns, tiny glowing eyes #c4b5fd, bulky blob silhouette 78% frame, 2px outline, readable at 32px among cyan particles, xianxia dark spirit, pure white background, no smoke filling canvas",
+    "enemy_yellow": "slot=enemy_yellow: top-down turbid qi slime goblin, yellow-lime jelly body #c8e635 with darker green spots #6b8f71, round cute-evil face two nubs horns, 80% frame as simple circle-oval, highest brightness of all enemies, thick 2px outline, must read as bright dot at 24px on dark arena, xianxia low tier yaoguai, pure white background"
+  },
+  "post_process": [
+    "white_to_alpha threshold >= 245",
+    "shrink to target_display_px longest edge, keep aspect",
+    "reject if subject touches canvas edge within 8px",
+    "export: player.png enemy_red.png enemy_blue.png enemy_yellow.png"
+  ],
+  "acceptance_thumbnail_px": [64, 48, 32]
+}
