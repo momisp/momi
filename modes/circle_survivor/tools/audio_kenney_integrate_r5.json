@@ -1,0 +1,47 @@
+{
+  "round": 5,
+  "goal": "hud_pill_11_11_commercial_listen_xianxia",
+  "dest_dir": "modes/circle_survivor/assets/sfx",
+  "copy_script": "modes/circle_survivor/tools/copy_kenney_sfx.mjs",
+  "sync_script": "modes/circle_survivor/tools/sync_playable_assets.mjs",
+  "execute": [
+    "node modes/circle_survivor/tools/copy_kenney_sfx.mjs --root <KENNEY_ROOT>",
+    "node modes/circle_survivor/tools/sync_playable_assets.mjs"
+  ],
+  "web_consumer": "modes/circle_survivor/audio.js",
+  "hud_consumer": "modes/circle_survivor/CircleSurvivorGame.jsx asset pill",
+  "required_ogg_count": 11,
+  "pygame_alias_copy": [
+    { "from": "level_up.ogg", "also_as": "levelup.ogg" }
+  ],
+  "priority_copy_order": [
+    "bgm_loop.ogg",
+    "level_up.ogg",
+    "pickup.ogg",
+    "thunder.ogg",
+    "tribulation.ogg",
+    "victory.ogg",
+    "game_over.ogg",
+    "hit.ogg",
+    "hurt.ogg",
+    "kill.ogg",
+    "ui_click.ogg"
+  ],
+  "kenney_map": [
+    { "dest": "hit.ogg", "event": "hit", "layer": "combat", "kenney_pack": "Impact Sounds", "kenney_file": "impactMetal_light_000.ogg" },
+    { "dest": "kill.ogg", "event": "kill", "layer": "state", "kenney_pack": "Impact Sounds", "kenney_file": "impactGeneric_light_003.ogg" },
+    { "dest": "thunder.ogg", "event": "thunder", "layer": "combat", "kenney_pack": "Impact Sounds", "kenney_file": "impactPlate_heavy_001.ogg" },
+    { "dest": "tribulation.ogg", "event": "tribulation", "layer": "boss", "kenney_pack": "Impact Sounds", "kenney_file": "impactMetal_heavy_002.ogg" },
+    { "dest": "level_up.ogg", "event": "level_up", "layer": "state", "kenney_pack": "Interface Sounds", "kenney_file": "confirmation_001.ogg" },
+    { "dest": "hurt.ogg", "event": "hurt", "layer": "state", "kenney_pack": "Interface Sounds", "kenney_file": "error_004.ogg" },
+    { "dest": "ui_click.ogg", "event": "ui_click", "layer": "ui", "kenney_pack": "Interface Sounds", "kenney_file": "click_001.ogg" },
+    { "dest": "game_over.ogg", "event": "game_over", "layer": "state", "kenney_pack": "Interface Sounds", "kenney_file": "error_001.ogg" },
+    { "dest": "victory.ogg", "event": "victory", "layer": "state", "kenney_pack": "Interface Sounds", "kenney_file": "confirmation_004.ogg" },
+    { "dest": "pickup.ogg", "event": "pickup", "layer": "state", "kenney_pack": "Interface Sounds", "kenney_file": "click_003.ogg" },
+    { "dest": "bgm_loop.ogg", "event": "bgm", "layer": "bgm", "kenney_pack": "Music Loops", "kenney_file": "loop_001.ogg" }
+  ],
+  "post_copy": [
+    "Reload /play/circle-survivor — pill 音效 11/11 green",
+    "Ear-test 60s with BGM on + one level_up + pickup spam"
+  ]
+}

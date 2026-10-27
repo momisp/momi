@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "round": 4,
+  "version": 5,
+  "round": 5,
   "volumes": {
     "bgm": 0.32,
     "sfx": 0.5
@@ -34,7 +34,7 @@
     "hit": "剑气/符命中",
     "kill": "斩妖",
     "thunder": "雷掌",
-    "level_up": "破境",
+    "level_up": "破境（赐法暂停）",
     "hurt": "气血受损",
     "ui_click": "择法/道台",
     "game_over": "道消",
