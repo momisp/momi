@@ -1,0 +1,31 @@
+{
+  "round": 4,
+  "theme": "commercial_survivor_xianxia",
+  "style_lock": "top-down 90deg orthographic game sprite, ONE character centered, pure white background #FFFFFF, no text no watermark, premium mobile survivor style, clean cel shading, crisp 2-3px outline #1a1a2e, saturated readable colors on dark arena #060a10, NO outer glow NO aura NO motion blur NO smoke filling frame, NO realistic photo",
+  "output": {
+    "size_px": 512,
+    "target_display_px": {
+      "player": 39,
+      "enemy_red": 33,
+      "enemy_blue": 40,
+      "enemy_yellow": 24
+    },
+    "safe_margin_px": 60,
+    "format": "png",
+    "matte": "white_to_alpha",
+    "dest_dir": "modes/circle_survivor/assets/ai"
+  },
+  "regenerate_slots": ["player", "enemy_red", "enemy_blue", "enemy_yellow"],
+  "prompts": {
+    "player": "slot=player: top-down 90deg young male daoist cultivator, premium game sprite, azure dao robe #4db8e8 gold trim #d4af37, black topknot jade pin, head 25% of body height for readability, mid-stride feet bottom center, small sword hilt at hip only, crisp 3px dark outline, high contrast edges for #060a10 background, NO halo NO aura NO cape spread NO floating sword, 65% canvas height, xianxia hero, pure white background",
+    "enemy_red": "slot=enemy_red: top-down quadruped wolf yaoguai, premium game sprite, snout and nose at TOP of image 12 o'clock, four legs visible from above, rust red #c53030 body darker back #7f1d1d, triangular ears, diamond silhouette 70% frame, NOT flame NOT abstract blob, 2-3px outline, must read as wolf head at 32px on #12202c, xianxia beast, pure white background",
+    "enemy_blue": "slot=enemy_blue: top-down shadow fiend yaoguai, premium game sprite, broad shoulders forward, purple-blue #5b4b8a violet rim light #a78bfa, small horns, oval dark body 75% frame, tiny eyes, crisp outline, readable blob vs wolf triangle at 32px, xianxia dark spirit, pure white background, no full-frame fog",
+    "enemy_yellow": "slot=enemy_yellow: top-down qi slime goblin, premium game sprite, yellow-lime jelly #c8e635 green spots #65a30d, round body 82% frame simplest shape, cute-evil face, brightest enemy on dark field, thick outline, clear circle at 24px thumbnail, xianxia low yaoguai, pure white background"
+  },
+  "post_process": [
+    "white_to_alpha threshold >= 245",
+    "shrink longest edge to target_display_px",
+    "reject edge touch within 10px",
+    "sync to Web: modes/circle_survivor/assets/ai/*.png"
+  ]
+}
