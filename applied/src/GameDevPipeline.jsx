@@ -126,6 +126,18 @@ export default function GameDevPipeline() {
       <pre className="gdp-log">{log || '输出将写入 generated/…/game-pipeline/'}</pre>
 
       <section className="gdp-changelog">
+        <h2>R5 · 资源闭环 · 试玩可见</h2>
+        <ul>
+          <li>
+            <code>sync_playable_assets.mjs</code>：playable/assets → 模式根 assets
+          </li>
+          <li>
+            HUD <strong>素材 4/4 · 音效 11/11</strong> pill；Kenney/PNG 落盘即变绿
+          </li>
+          <li>
+            <code>smoke_settle.mjs</code>：180s 胜利 / 0 气血败北；结算 R/Enter 重开
+          </li>
+        </ul>
         <h2>R6 · Web 试玩 · 对标商用 polish（修仙皮）</h2>
         <ul>
           <li>

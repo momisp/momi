@@ -234,3 +234,14 @@ export function sfxTribulation() {
     'tribulation',
   );
 }
+
+/** 已解码 Kenney 轨数（供 HUD / 冒烟对齐） */
+export function getSfxLoadStats() {
+  const events = manifest.events || {};
+  const expected = Object.keys(events).length;
+  let loaded = 0;
+  for (const key of Object.keys(events)) {
+    if (buffers[key]) loaded += 1;
+  }
+  return { loaded, expected, usingFallback: loaded < expected };
+}

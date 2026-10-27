@@ -11,7 +11,7 @@ const sessions = new Map();
 
 const ROLE_STUBS = {
   dev: (req, round) =>
-    `# R${round} 开发\n\n需求摘要：${req.slice(0, 200)}\n\n- Web：visual_polish 震屏飘字、procedural_art、商用风 HUD\n- render 扫光/击杀粒子/暗角；playable 四槽+SFX 已验\n- 数值不变；Web assets/ai+ogg 与 playable 对齐待拷贝`,
+    `# R${round} 开发\n\n需求摘要：${req.slice(0, 200)}\n\n- R5：sync_playable_assets.mjs；HUD 素材/音效 pill；smoke_settle\n- 数值不变；P0 仍为一键同步 PNG+11 ogg 后 pill 4/4·11/11\n- 试玩 /play/circle-survivor`,
   'art-ui': () => `# 美术UI\n\n- 矢量修仙主角/妖兽 fallback\n- 灵气圈、符箓、雷环特效\n- slots.json 接 PNG 贴图槽`,
   audio: () => `# 音效\n\n- WebAudio procedural：斩妖、雷掌、破境、败北/胜利\n- 可选 manifest.ogg；BGM 五音 ambient 开关`,
   balance: () => `# 数值\n\n- xpToNextLevel 前期 12+\n- spawnBudgetAt 分段增长\n- 150s+ 渡劫兽`,

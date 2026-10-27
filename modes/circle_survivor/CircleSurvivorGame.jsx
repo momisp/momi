@@ -11,6 +11,7 @@ import {
   xpToNextLevel,
 } from './balance.js';
 import { recordUpgradePick, rollUpgradeChoices } from './upgrades.js';
+import { probeAllGameAssets } from './game_assets.js';
 import { initSprites } from './sprites.js';
 import { clampInArena, drawFrame, pushFx } from './render.js';
 import { createAmbientParticles, tickAmbientParticles } from './scene_ambient.js';
@@ -70,6 +71,14 @@ export default function CircleSurvivorGame({ onExit }) {
   const rafRef = useRef(0);
   const lastTRef = useRef(0);
   const pickUpgradeRef = useRef(() => {});
+  const restartRef = useRef(() => {});
+  const assetStatsRef = useRef({
+    aiLoaded: 0,
+    aiExpected: 4,
+    sfxLoaded: 0,
+    sfxExpected: 11,
+    assetsReady: false,
+  });
 
   const [hud, setHud] = useState({
     hp: 100,
@@ -84,6 +93,11 @@ export default function CircleSurvivorGame({ onExit }) {
     muted: false,
     bgmOn: true,
     weaponLevels: { flying_sword: 1, thunder_palm: 0, talisman_burst: 0 },
+    aiLoaded: 0,
+    aiExpected: 4,
+    sfxLoaded: 0,
+    sfxExpected: 11,
+    assetsReady: false,
   });
 
   const syncHud = useCallback((s) => {
@@ -100,6 +114,7 @@ export default function CircleSurvivorGame({ onExit }) {
       muted: s.muted,
       bgmOn: s.bgmOn,
       weaponLevels: { ...s.weaponLevels },
+      ...assetStatsRef.current,
     });
   }, []);
 
@@ -385,6 +400,11 @@ export default function CircleSurvivorGame({ onExit }) {
         if (s.phase === 'playing' && !s.upgradeChoices) exitGame();
         return;
       }
+      if ((s.phase === 'victory' || s.phase === 'defeat') && ['r', 'R', 'Enter', ' '].includes(e.key)) {
+        e.preventDefault();
+        restartRef.current();
+        return;
+      }
       if (s.upgradeChoices?.length && ['1', '2', '3'].includes(e.key)) {
         e.preventDefault();
         const idx = Number(e.key) - 1;
@@ -405,8 +425,19 @@ export default function CircleSurvivorGame({ onExit }) {
     let cancelled = false;
     (async () => {
       await audio.initAudio();
-      spritesRef.current = await initSprites();
+      const spritePack = await initSprites();
+      spritesRef.current = spritePack.sprites || spritePack;
+      const probed = await probeAllGameAssets();
+      const sfxStats = audio.getSfxLoadStats();
+      assetStatsRef.current = {
+        aiLoaded: Math.max(spritePack.aiLoaded ?? 0, probed.ai.loaded),
+        aiExpected: probed.ai.expected,
+        sfxLoaded: Math.max(sfxStats.loaded, probed.sfx.loaded),
+        sfxExpected: probed.sfx.expected,
+        assetsReady: probed.ready,
+      };
       if (cancelled) return;
+      syncHud(stateRef.current);
       audio.startBgm();
       lastTRef.current = performance.now();
       rafRef.current = requestAnimationFrame(tick);
@@ -465,6 +496,8 @@ export default function CircleSurvivorGame({ onExit }) {
     syncHud(stateRef.current);
   };
 
+  restartRef.current = restart;
+
   const toggleMute = () => {
     audio.unlockFromUserGesture();
     const s = stateRef.current;
@@ -513,6 +546,12 @@ export default function CircleSurvivorGame({ onExit }) {
         </div>
         <div className="cs-hud-meta">
           <span className="cs-kills">斩妖 {hud.kills}</span>
+          <span
+            className={`cs-asset-pill ${hud.assetsReady ? 'ready' : 'warn'}`}
+            title="四槽 PNG + Kenney 11 轨；未齐时仍用程序回退"
+          >
+            素材 {hud.aiLoaded}/{hud.aiExpected} · 音效 {hud.sfxLoaded}/{hud.sfxExpected}
+          </span>
           <button type="button" className="cs-btn-ghost" onClick={toggleMute}>
             {hud.muted ? '🔇' : '🔊'}
           </button>

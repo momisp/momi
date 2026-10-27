@@ -243,5 +243,4 @@ function main() {
   process.exit(0);
 }
 
-let s2;
 main();

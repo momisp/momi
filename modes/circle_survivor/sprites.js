@@ -28,9 +28,12 @@ export function getCachedSprites() {
   return cache;
 }
 
+const CORE_AI_KEYS = ['player', 'enemy_red', 'enemy_blue', 'enemy_yellow'];
+
 export async function initSprites() {
   const loaded = await loadSpriteSlots();
   cache.clear();
   Object.assign(cache, loaded);
-  return cache;
+  const aiLoaded = CORE_AI_KEYS.filter((k) => loaded[k]).length;
+  return { sprites: cache, aiLoaded, aiExpected: CORE_AI_KEYS.length };
 }

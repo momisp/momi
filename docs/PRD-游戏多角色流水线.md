@@ -43,6 +43,15 @@
 - [x] 赐法卡神通/心法分色；舞台边框与金线 UI
 - [ ] Web 端同步 `assets/ai/*.png` + 11 ogg（与 playable 对齐）
 
+## R5 交付（开发 · 资源闭环工具 + 试玩可见）
+
+- [x] `tools/sync_playable_assets.mjs`：playable → `assets/ai` + `assets/sfx` 一键同步
+- [x] `game_assets.js` + HUD **素材 n/4 · 音效 n/11**  pill（未齐黄色提示）
+- [x] `audio.getSfxLoadStats()` / `initSprites` 返回加载计数
+- [x] 结算 **R / Enter / 空格** 再入试炼；`tools/smoke_settle.mjs` 胜利/败北断言
+- [x] `playable/README.md` 可带走目录约定
+- [ ] 流水线 art/audio 落盘后 pill 变绿（4/4 + 11/11）
+
 ## 后续
 
 - QA：180s 通关、60+ 怪帧率、5 局 BGM、耳听 Kenney
