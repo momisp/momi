@@ -25,6 +25,23 @@ const WEAPON_HUD = [
   { key: 'talisman_burst', label: '符箓' },
 ];
 
+const CODE_TO_MOVE = {
+  KeyW: 'w',
+  KeyA: 'a',
+  KeyS: 's',
+  KeyD: 'd',
+  ArrowUp: 'ArrowUp',
+  ArrowDown: 'ArrowDown',
+  ArrowLeft: 'ArrowLeft',
+  ArrowRight: 'ArrowRight',
+};
+
+function setKeyFromEvent(keys, e, down) {
+  const codeKey = CODE_TO_MOVE[e.code];
+  if (codeKey) keys[codeKey] = down;
+  if (e.key?.length === 1 || e.key?.startsWith('Arrow')) keys[e.key] = down;
+}
+
 function createInitialState() {
   return {
     player: {
@@ -72,6 +89,7 @@ export default function CircleSurvivorGame({ onExit }) {
   const lastTRef = useRef(0);
   const pickUpgradeRef = useRef(() => {});
   const restartRef = useRef(() => {});
+  const sessionStartedRef = useRef(false);
   const assetStatsRef = useRef({
     aiLoaded: 0,
     aiExpected: 4,
@@ -99,6 +117,8 @@ export default function CircleSurvivorGame({ onExit }) {
     sfxExpected: 11,
     assetsReady: false,
   });
+
+  const [sessionStarted, setSessionStarted] = useState(false);
 
   const syncHud = useCallback((s) => {
     setHud({
@@ -220,11 +240,22 @@ export default function CircleSurvivorGame({ onExit }) {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const s = stateRef.current;
-      const dt = Math.min(0.05, (now - lastTRef.current) / 1000 || 0);
-      lastTRef.current = now;
-
       const w = canvas.width;
       const h = canvas.height;
+
+      if (!sessionStartedRef.current) {
+        lastTRef.current = now;
+        tickAmbientParticles(ambientRef.current, Math.min(0.05, 1 / 60));
+        const ctxIdle = canvas.getContext('2d');
+        ctxIdle.setTransform(1, 0, 0, 1, 0, 0);
+        ctxIdle.clearRect(0, 0, w, h);
+        drawFrame(ctxIdle, w, h, s, spritesRef.current, now, ambientRef.current, polishRef.current);
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      const dt = Math.min(0.05, (now - lastTRef.current) / 1000 || 0);
+      lastTRef.current = now;
 
       if (s.phase === 'playing' && !s.paused) {
         s.elapsed += dt;
@@ -388,8 +419,13 @@ export default function CircleSurvivorGame({ onExit }) {
 
   useEffect(() => {
     const onKey = (e, down) => {
-      keysRef.current[e.key] = down;
-      if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
+      setKeyFromEvent(keysRef.current, e, down);
+      if (
+        CODE_TO_MOVE[e.code] ||
+        [' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)
+      ) {
+        e.preventDefault();
+      }
     };
     const kd = (e) => {
       audio.unlockFromUserGesture();
@@ -438,7 +474,6 @@ export default function CircleSurvivorGame({ onExit }) {
       };
       if (cancelled) return;
       syncHud(stateRef.current);
-      audio.startBgm();
       lastTRef.current = performance.now();
       rafRef.current = requestAnimationFrame(tick);
     })();
@@ -447,7 +482,19 @@ export default function CircleSurvivorGame({ onExit }) {
       cancelAnimationFrame(rafRef.current);
       audio.stopBgm();
     };
-  }, [tick]);
+  }, [tick, syncHud]);
+
+  const beginSession = useCallback(() => {
+    if (sessionStartedRef.current) return;
+    sessionStartedRef.current = true;
+    setSessionStarted(true);
+    audio.unlockFromUserGesture();
+    const s = stateRef.current;
+    audio.setMuted(s.muted);
+    if (s.bgmOn) audio.startBgm();
+    lastTRef.current = performance.now();
+    canvasRef.current?.focus({ preventScroll: true });
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -561,7 +608,7 @@ export default function CircleSurvivorGame({ onExit }) {
         </div>
       </header>
 
-      <div className="cs-canvas-wrap cs-stage">
+      <div className="cs-canvas-wrap cs-stage cs-input-guard">
         <div className="cs-timer-overlay" aria-live="polite">
           <span className="cs-timer-main">{fmtTime(hud.elapsed)}</span>
           <span className="cs-timer-sub">/ {fmtTime(GAME_DURATION_SEC)}</span>
@@ -581,11 +628,36 @@ export default function CircleSurvivorGame({ onExit }) {
             })}
           </ul>
         </aside>
-        <canvas ref={canvasRef} className="cs-canvas" />
+        <canvas
+          ref={canvasRef}
+          className="cs-canvas"
+          tabIndex={0}
+          aria-label="试炼场"
+          onPointerDown={() => canvasRef.current?.focus({ preventScroll: true })}
+        />
         <p className="cs-hint">
           WASD 移动 · Esc 返回道台（赐法面板打开时 Esc 不退出）· 1/2/3 择法 · 撑满 {GAME_DURATION_SEC / 60} 分钟渡劫成功
         </p>
       </div>
+
+      {!sessionStarted && (
+        <div className="cs-overlay cs-start" role="dialog" aria-modal="true" aria-label="开始试炼">
+          <div className="cs-panel cs-start-panel">
+            <h2>圆内试炼</h2>
+            <p className="cs-sub">
+              点击开始以启用 BGM 与音效（浏览器策略）。WASD 走位，法宝自动施放。
+            </p>
+            <p className={`cs-start-assets ${hud.assetsReady ? 'ready' : 'warn'}`}>
+              素材 {hud.aiLoaded}/{hud.aiExpected} · 音效 {hud.sfxLoaded}/{hud.sfxExpected}
+              {!hud.assetsReady && ' · 未齐时仍用程序回退'}
+            </p>
+            <button type="button" className="cs-btn primary cs-start-btn" onClick={beginSession}>
+              点击 · 入阵试炼
+            </button>
+            <p className="cs-start-hint">中文输入法下请用物理 WASD；Esc 返回道台</p>
+          </div>
+        </div>
+      )}
 
       {showUpgrade && (
         <div className="cs-overlay cs-upgrade" role="dialog" aria-modal="true" aria-label="择法升级">

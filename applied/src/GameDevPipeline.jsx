@@ -138,23 +138,24 @@ export default function GameDevPipeline() {
             <code>smoke_settle.mjs</code>：180s 胜利 / 0 气血败北；结算 R/Enter 重开
           </li>
         </ul>
-        <h2>R6 · Web 试玩 · 对标商用 polish（修仙皮）</h2>
+        <h2>R6 · 入阵门 + 商用资源引导</h2>
         <ul>
           <li>
-            <code>visual_polish.js</code>：受击震屏、伤害/灵韵飘字、全屏暗角
+            <code>CircleSurvivorGame.jsx</code>：点击「入阵试炼」解锁 BGM/SFX；物理 WASD（<code>e.code</code>）
           </li>
           <li>
-            <code>procedural_art.js</code>：无 PNG 时高质俯视修士/妖兽（阴影+渐变）
+            <code>bootstrap_commercial_assets.mjs</code> / <code>check_assets_ready.mjs</code>：双 pill 4/4·11/11 磁盘验收
           </li>
           <li>
-            <code>render.js</code>：结界扫光弧、击杀粒子 FX、渐变场背景、灵韵高光圈
+            <code>smoke_playable.mjs</code>：资源齐时输出 <code>CHECK assets_ready</code>
           </li>
+        </ul>
+        <h3>R4–R6 polish（程序层）</h3>
+        <ul>
           <li>
-            <code>CircleSurvivorGame.jsx</code>：polish 接入；气血十段；顶栏倒计时；赐法卡神通/心法分色
+            <code>visual_polish.js</code> / <code>procedural_art.js</code> / <code>render.js</code>：震屏、飘字、结界 FX
           </li>
-          <li>
-            <code>circle_survivor.css</code>：金线玻璃 HUD、舞台边框、幸存者式计时条
-          </li>
+          <li>P0：Kenney 11 ogg + 四槽 PNG 落盘后刷新试玩</li>
         </ul>
         <h3>R3–R5 回顾</h3>
         <ul>

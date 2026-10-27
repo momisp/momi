@@ -258,11 +258,58 @@
   color: #7dd3fc;
 }
 
+.cs-input-guard {
+  ime-mode: disabled;
+}
+
 .cs-canvas {
   width: 100%;
   height: 100%;
   display: block;
   touch-action: none;
+  outline: none;
+}
+
+.cs-canvas:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(125, 211, 252, 0.35);
+}
+
+.cs-start-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+  color: #fcd34d;
+  letter-spacing: 0.12em;
+}
+
+.cs-start-assets {
+  font-size: 0.82rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.cs-start-assets.ready {
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.cs-start-assets.warn {
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.28);
+}
+
+.cs-start-btn {
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.cs-start-hint {
+  margin: 0.85rem 0 0;
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.75);
+  text-align: center;
 }
 
 .cs-hint {

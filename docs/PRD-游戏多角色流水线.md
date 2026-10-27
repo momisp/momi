@@ -52,6 +52,15 @@
 - [x] `playable/README.md` 可带走目录约定
 - [ ] 流水线 art/audio 落盘后 pill 变绿（4/4 + 11/11）
 
+## R6 交付（开发 · 商用体验门槛 + 入阵门）
+
+- [x] **点击入阵**：`CircleSurvivorGame.jsx` 开局面板解锁 WebAudio/BGM（对标手游/页游）
+- [x] **WASD 物理键**：`e.code` + canvas `ime-mode: disabled`，减轻中文输入法干扰
+- [x] `tools/bootstrap_commercial_assets.mjs`：sync playable → 可选 Kenney → 磁盘验收
+- [x] `tools/check_assets_ready.mjs` + `assets_fs.mjs`；`smoke_playable` 资源齐时 `CHECK assets_ready`
+- [ ] 双 pill 绿仍为产品 P0（art/audio 落盘 + 刷新 `/play/circle-survivor`）
+- [ ] Web 真相源文档：试玩以 **`balance.js` + 三法宝** 为准（PRD v0.3 五法宝/pygame → backlog）
+
 ## 后续
 
 - QA：180s 通关、60+ 怪帧率、5 局 BGM、耳听 Kenney

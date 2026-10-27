@@ -17,6 +17,7 @@ import {
 } from '../balance.js';
 import { rollUpgradeChoices, recordUpgradePick } from '../upgrades.js';
 import { clampInArena } from '../render.js';
+import { assetsReadyOnDisk, countAiPng, countSfxOgg } from './assets_fs.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MODE_ROOT = path.join(__dirname, '..');
@@ -161,29 +162,6 @@ function tickMovement(s, keys, dt, now) {
   }
 }
 
-function countAiPng(root) {
-  const ai = path.join(root, 'assets', 'ai');
-  const names = ['player.png', 'enemy_red.png', 'enemy_blue.png', 'enemy_yellow.png'];
-  let n = 0;
-  for (const f of names) {
-    if (fs.existsSync(path.join(ai, f))) n += 1;
-  }
-  return n;
-}
-
-function countSfxOgg(root) {
-  const sfx = path.join(root, 'assets', 'sfx');
-  const manifest = path.join(sfx, 'manifest.json');
-  if (!fs.existsSync(manifest)) return { loaded: 0, expected: 0 };
-  const m = JSON.parse(fs.readFileSync(manifest, 'utf8'));
-  const events = m.events || {};
-  let loaded = 0;
-  for (const fname of Object.values(events)) {
-    if (fs.existsSync(path.join(sfx, fname))) loaded += 1;
-  }
-  return { loaded, expected: Object.keys(events).length };
-}
-
 function main() {
   const root = resolveRoot();
   console.log('=== circle_survivor smoke_playable ===');
@@ -233,6 +211,12 @@ function main() {
 
   const ambient = 52;
   console.log(`INFO ambient_particles ${ambient} (scene_ambient default)`);
+
+  if (assetsReadyOnDisk(root).ready) {
+    console.log('CHECK assets_ready');
+  } else {
+    console.log('INFO assets_ready skip (PNG/ogg 未齐，非阻拦)');
+  }
 
   const blockers = !enterOk || !wasdOk || !attackOk || !keyPickOk || !numPickOk;
   if (blockers) {
