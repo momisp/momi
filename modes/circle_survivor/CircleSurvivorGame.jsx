@@ -13,8 +13,15 @@ import {
 import { recordUpgradePick, rollUpgradeChoices } from './upgrades.js';
 import { initSprites } from './sprites.js';
 import { clampInArena, drawFrame, pushFx } from './render.js';
+import { createAmbientParticles, tickAmbientParticles } from './scene_ambient.js';
 import * as audio from './audio.js';
 import './circle_survivor.css';
+
+const WEAPON_HUD = [
+  { key: 'flying_sword', label: '御剑诀' },
+  { key: 'thunder_palm', label: '雷掌' },
+  { key: 'talisman_burst', label: '符箓' },
+];
 
 function createInitialState() {
   return {
@@ -57,6 +64,7 @@ export default function CircleSurvivorGame({ onExit }) {
   const stateRef = useRef(createInitialState());
   const keysRef = useRef({});
   const spritesRef = useRef({});
+  const ambientRef = useRef(createAmbientParticles());
   const rafRef = useRef(0);
   const lastTRef = useRef(0);
   const pickUpgradeRef = useRef(() => {});
@@ -73,6 +81,7 @@ export default function CircleSurvivorGame({ onExit }) {
     upgradeChoices: null,
     muted: false,
     bgmOn: true,
+    weaponLevels: { flying_sword: 1, thunder_palm: 0, talisman_burst: 0 },
   });
 
   const syncHud = useCallback((s) => {
@@ -88,6 +97,7 @@ export default function CircleSurvivorGame({ onExit }) {
       upgradeChoices: s.upgradeChoices,
       muted: s.muted,
       bgmOn: s.bgmOn,
+      weaponLevels: { ...s.weaponLevels },
     });
   }, []);
 
@@ -230,13 +240,17 @@ export default function CircleSurvivorGame({ onExit }) {
           spawnEnemy(s, pickEnemyKind(s.elapsed));
         }
 
+        tickAmbientParticles(ambientRef.current, dt);
+
         const sec = Math.floor(s.elapsed);
         for (const at of TRIBULATION_SPAWN_AT_SEC) {
           if (sec >= at && !s.bossMarks[at]) {
             s.bossMarks[at] = true;
-            spawnEnemy(s, ENEMY_KINDS.tribulation_beast);
-            audio.sfxTribulation();
-            pushFx({ type: 'level', x: 0, y: -ARENA_RADIUS * 0.5, duration: 800 });
+            if (!s.enemies.some((e) => e.kind?.boss)) {
+              spawnEnemy(s, ENEMY_KINDS.tribulation_beast);
+              audio.sfxTribulation();
+              pushFx({ type: 'tribulation_warn', x: 0, y: 0, duration: 1200 });
+            }
           }
         }
 
@@ -330,7 +344,7 @@ export default function CircleSurvivorGame({ onExit }) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, w, h);
       ctx.translate(w / 2, h / 2);
-      drawFrame(ctx, w, h, s, spritesRef.current, now);
+      drawFrame(ctx, w, h, s, spritesRef.current, now, ambientRef.current);
 
       if (Math.floor(now / 200) !== Math.floor((now - dt * 1000) / 200)) syncHud(s);
       rafRef.current = requestAnimationFrame(tick);
@@ -428,6 +442,7 @@ export default function CircleSurvivorGame({ onExit }) {
     audio.sfxUiClick();
     audio.stopBgm();
     stateRef.current = createInitialState();
+    ambientRef.current = createAmbientParticles();
     stateRef.current.bgmOn = hud.bgmOn;
     stateRef.current.muted = hud.muted;
     audio.setMuted(hud.muted);
@@ -490,16 +505,31 @@ export default function CircleSurvivorGame({ onExit }) {
       </header>
 
       <div className="cs-canvas-wrap">
+        <aside className="cs-weapon-rail" aria-label="已习神通">
+          <span className="cs-weapon-rail-title">神通</span>
+          <ul className="cs-weapon-list">
+            {WEAPON_HUD.map(({ key, label }) => {
+              const lv = hud.weaponLevels[key] || 0;
+              if (lv <= 0) return null;
+              return (
+                <li key={key} className="cs-weapon-chip" data-lv={Math.min(lv, 5)}>
+                  <span className="cs-weapon-name">{label}</span>
+                  <span className="cs-weapon-lv">Lv{lv}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </aside>
         <canvas ref={canvasRef} className="cs-canvas" />
         <p className="cs-hint">
-          WASD 移动 · Esc 返回道台 · 破境时按 1/2/3 择法 · 撑满 {GAME_DURATION_SEC / 60} 分钟渡劫成功
+          WASD 移动 · Esc 返回道台（赐法面板打开时 Esc 不退出）· 1/2/3 择法 · 撑满 {GAME_DURATION_SEC / 60} 分钟渡劫成功
         </p>
       </div>
 
       {showUpgrade && (
         <div className="cs-overlay cs-upgrade" role="dialog" aria-modal="true" aria-label="择法升级">
           <div className="cs-panel cs-upgrade-panel">
-            <h2>破境择法</h2>
+            <h2>天道赐法 · 三选一</h2>
             <p className="cs-sub">择一项神通继续试炼（点击或按 1 / 2 / 3）</p>
             <div className="cs-upgrade-grid">
               {hud.upgradeChoices.map((c, i) => (

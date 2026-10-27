@@ -15,7 +15,7 @@ const LS_KEY = 'game-dev-pipeline-v1';
 
 export default function GameDevPipeline() {
   const [requirement, setRequirement] = useState('');
-  const [rounds, setRounds] = useState(2);
+  const [rounds, setRounds] = useState(3);
   const [running, setRunning] = useState(false);
   const [stepIndex, setStepIndex] = useState(-1);
   const [log, setLog] = useState('');
@@ -126,23 +126,32 @@ export default function GameDevPipeline() {
       <pre className="gdp-log">{log || '输出将写入 generated/…/game-pipeline/'}</pre>
 
       <section className="gdp-changelog">
-        <h2>R2 · 开发改动清单</h2>
+        <h2>R3 · 开发改动清单（观感灵动 + 渡劫调平）</h2>
         <ul>
           <li>
-            <code>balance.js</code>：XP L1≈17、浊气灵韵+1、拾取 52、前 30s spawn、狼 22s 入场、武器常数、渡劫兽 370 血
+            <code>scene_ambient.js</code>（新）：结界内飘动灵气粒子，无贴图依赖
           </li>
           <li>
-            <code>CircleSurvivorGame.jsx</code>：120/150/175s 渡劫兽、Esc 退出、1/2/3 破境、灵韵 pickup 音效
+            <code>render.js</code>：呼吸结界、旋转阵纹、灵韵/剑气/符箓/渡劫环 FX；<code>drawFrame</code> 接粒子层
           </li>
           <li>
-            <code>upgrades.js</code>：神通卡权重 ×1.4、回春/吐纳局内最多 2 次
+            <code>balance.js</code>：渡劫波 <strong>150/175s</strong>、兽 HP 330、移速 44；后段 spawn 2.75+0.032、影魔权重 0.42
           </li>
           <li>
-            <code>public/favicon.svg</code>：消除 favicon 404
+            <code>CircleSurvivorGame.jsx</code>：同屏仅 1 渡劫兽、<code>tribulation_warn</code>、右侧神通 HUD、「天道赐法 · 三选一」
+          </li>
+          <li>
+            <code>circle_survivor.css</code>：神通栏光晕、赐法面板脉动、XP 条微光
+          </li>
+        </ul>
+        <h3>R2 回顾</h3>
+        <ul>
+          <li>
+            <code>upgrades.js</code>：神通卡 ×1.4、回春/吐纳上限 2；Esc、1/2/3 破境、manifest v2 音效映射
           </li>
         </ul>
         <p className="gdp-changelog-note">
-          P0 待流水线：<code>assets/ai/*.png</code> 四槽 + <code>copy_kenney_sfx.mjs</code> 落盘 ogg。
+          P0 待流水线：<code>assets/ai/*.png</code> 四槽 + <code>copy_kenney_sfx.mjs</code> 落盘 11 ogg（含 tribulation）。
         </p>
       </section>
     </div>
