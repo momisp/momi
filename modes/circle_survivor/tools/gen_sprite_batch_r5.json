@@ -1,0 +1,43 @@
+{
+  "round": 5,
+  "theme": "commercial_survivor_xianxia_r5",
+  "style_lock": "top-down 90deg orthographic game sprite, ONE character centered, pure white background #FFFFFF, no text no watermark, premium mobile survivor style, clean cel shading, crisp 2-3px outline #1a1a2e, saturated opaque body colors readable on dark arena #060a10, NO outer glow NO aura NO motion blur NO smoke filling frame, NO realistic photo",
+  "output": {
+    "size_px": 512,
+    "target_display_px": {
+      "player": 39,
+      "enemy_red": 33,
+      "enemy_blue": 40,
+      "enemy_yellow": 24
+    },
+    "safe_margin_px": 60,
+    "format": "png",
+    "matte": "white_to_alpha",
+    "dest_dir": "modes/circle_survivor/assets/ai",
+    "export_files": [
+      "player.png",
+      "enemy_red.png",
+      "enemy_blue.png",
+      "enemy_yellow.png"
+    ]
+  },
+  "regenerate_slots": ["player", "enemy_red", "enemy_blue", "enemy_yellow"],
+  "priority_order": ["enemy_red", "player", "enemy_yellow", "enemy_blue"],
+  "prompts": {
+    "player": "slot=player: top-down 90deg young male daoist cultivator, premium survivor game sprite, azure dao robe #4db8e8 gold trim #d4af37 black topknot jade hairpin, head 25% of total height, walking pose feet at bottom center, tiny sword hilt at belt only, cel shading, crisp 3px outline #1a1a2e, 65% canvas height, high contrast silhouette on #060a10, NO halo NO aura NO cape spread NO floating sword NO spell effects, xianxia hero, pure white background",
+    "enemy_red": "slot=enemy_red: top-down quadruped wolf demon yaoguai, premium survivor game sprite, SNOUT and NOSE pointing to TOP of image 12 o'clock, four legs spread visible from above, rust red fur #c53030 dark back #7f1d1d, pointed ears at 10 and 2 o'clock, diamond body silhouette 72% frame, cel shading 3px outline, must read clearly as WOLF HEAD at 33px on #12202c, NOT flame NOT smoke NOT abstract red blob, xianxia beast, pure white background",
+    "enemy_blue": "slot=enemy_blue: top-down shadow fiend yaoguai humanoid hunch, premium survivor game sprite, wide shoulders facing camera, purple body #4a3a6b violet highlight #a78bfa, small horns, compact oval torso 75% frame, tiny glowing eyes, cel shading thick outline, distinct from wolf quadruped at 40px, NO full-frame fog NO wings spread, xianxia dark spirit, pure white background",
+    "enemy_yellow": "slot=enemy_yellow: top-down round qi slime goblin, premium survivor game sprite, bright yellow-lime body #c8e635 olive spots #84cc16, simple circle blob 85% frame, minimal cute-evil face two dots, highest brightness enemy for dark arena, thick dark outline, instantly readable dot at 24px among FX, xianxia low yaoguai, pure white background"
+  },
+  "post_process": [
+    "white_to_alpha threshold >= 245",
+    "shrink longest edge to target_display_px per slot",
+    "reject if subject touches canvas edge within 8px",
+    "node modes/circle_survivor/tools/sync_playable_assets.mjs optional after copy to playable/"
+  ],
+  "acceptance": [
+    "Web HUD pill 素材 4/4 turns green",
+    "32px thumbnail: red=wolf nose up, blue=hunch block, yellow=bright dot",
+    "No sprite outer glow; arena glow stays in render.js only"
+  ]
+}
